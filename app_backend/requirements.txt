@@ -1,0 +1,11 @@
+fastapi
+uvicorn[standard]
+sqlalchemy
+PyMySQL
+alembic
+pydantic[email]
+python-jose[cryptography]
+passlib[bcrypt]
+python-multipart
+pydantic-settings # Para gestionar la configuración desde .env
+pyotp # <--- AÑADIDO PARA 2FA
