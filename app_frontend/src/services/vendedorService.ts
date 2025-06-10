@@ -4,25 +4,6 @@ import {
     Vendedor, VendedorCreate, VendedorUpdate, 
     VendedorClientePorcentaje, VendedorClientePorcentajeCreate, VendedorClientePorcentajeUpdate 
 } from '../types/vendedor';
-import apiClient from './apiClient';
-
-// Tipo para la actualización de porcentajes
-export interface PorcentajeUpdate {
-  cliente_id: number;
-  porcentaje_bono: number;
-}
-
-// Función para actualizar porcentajes
-export const updateVendedorPorcentajes = async (
-  vendedorId: number, 
-  updates: PorcentajeUpdate[]
-) => {
-  const response = await apiClient.put(
-    `/vendedores/${vendedorId}/update-porcentajes`,
-    { updates }
-  );
-  return response.data;
-};
 
 interface VendedoresResponse { // Para la respuesta paginada
     items: Vendedor[];
@@ -52,7 +33,7 @@ const updateVendedor = async (id: number, data: VendedorUpdate): Promise<Vendedo
   return response.data;
 };
 
-const deleteVendedor = async (id: number): Promise<Vendedor> => { // O Promise<void> si el backend no devuelve el objeto
+const deleteVendedor = async (id: number): Promise<Vendedor> => {
   const response = await apiClient.delete<Vendedor>(`/vendedores/${id}`);
   return response.data;
 };
@@ -68,12 +49,24 @@ const updateClienteAsignacion = async (vendedorId: number, clienteId: number, da
     return response.data;
 };
 
-const removeClienteFromVendedor = async (vendedorId: number, clienteId: number): Promise<VendedorClientePorcentaje> => { // O Promise<void>
+const removeClienteFromVendedor = async (vendedorId: number, clienteId: number): Promise<VendedorClientePorcentaje> => {
     const response = await apiClient.delete<VendedorClientePorcentaje>(`/vendedores/${vendedorId}/clientes/${clienteId}/`);
     return response.data;
 };
 
-// TODO: Implementar uploadVendedoresCSV si se necesita para vendedores
+// --- Carga Masiva CSV ---
+const uploadVendedoresCSV = async (file: File): Promise<Vendedor[]> => {
+    const formData = new FormData();
+    formData.append('file', file);
+  
+    const response = await apiClient.post<Vendedor[]>('/vendedores/upload-csv/', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+    return response.data;
+};
+
 
 const vendedorService = {
   getAllVendedores,
@@ -84,6 +77,7 @@ const vendedorService = {
   addClienteToVendedor,
   updateClienteAsignacion,
   removeClienteFromVendedor,
+  uploadVendedoresCSV, // <-- Exportar la nueva función
 };
 
 export default vendedorService;

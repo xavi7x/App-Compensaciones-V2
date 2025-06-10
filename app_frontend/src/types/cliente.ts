@@ -25,7 +25,7 @@ export const clienteSchema = z.object({
   rut: z.string()
     .min(8, "El RUT debe tener al menos 8 caracteres.")
     .max(12, "El RUT no debe exceder los 12 caracteres.")
-    .refine(validarRutChileno, "RUT chileno inválido."),
+    .refine(validarRutChileno, "RUT inválido."),
   ramo: z.string().max(100).optional().nullable(),
   ubicacion: z.string().max(255).optional().nullable(),
 });

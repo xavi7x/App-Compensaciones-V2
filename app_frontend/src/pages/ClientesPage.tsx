@@ -178,7 +178,7 @@ const ClientesPage: React.FC = () => {
       </div>
 
       <div className="my-2 p-2 bg-yellow-100 text-yellow-800 text-xs rounded-md">
-        <p>Debug Paginación: currentPage: {currentPage}, totalPages: {totalPages}, totalClientes: {totalClientes}, itemsPerPage: {itemsPerPage}</p>
+        <p>Página actual: {currentPage}, Total Páginas: {totalPages}, Total Clientes: {totalClientes}, Clientes por página: {itemsPerPage}</p>
       </div>
 
       <div className="bg-white p-0 sm:p-2 rounded-xl shadow-lg">
