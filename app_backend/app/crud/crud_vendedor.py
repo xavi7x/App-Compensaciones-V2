@@ -1,5 +1,5 @@
 # app/crud/crud_vendedor.py
-from sqlalchemy.orm import Session, joinedload
+from sqlalchemy.orm import Session, joinedload, selectinload
 from sqlalchemy import func, or_
 from app.models.vendedor import Vendedor, VendedorClientePorcentaje
 from app.models.cliente import Cliente # Para verificar existencia de cliente
@@ -27,7 +27,10 @@ def get_vendedores(
             )
         )
 
-    total_count = query.count()
+    # El conteo se debe hacer sobre la consulta sin limit/offset
+    total_count_query = query.with_entities(func.count(Vendedor.id))
+    total_count = total_count_query.scalar() or 0
+
     items = query.order_by(Vendedor.nombre_completo).offset(skip).limit(limit).all()
     return items, total_count
 
@@ -79,27 +82,25 @@ def update_vendedor(
 def remove_vendedor(db: Session, *, vendedor_id: int) -> Optional[Vendedor]:
     db_vendedor = db.query(Vendedor).get(vendedor_id)
     if db_vendedor:
-        # Considerar qué hacer con las asignaciones VendedorClientePorcentaje (cascade delete o error si existen)
-        # Por ahora, las eliminamos si el modelo tiene cascade="all, delete-orphan" en la relación
-        # o las eliminamos manualmente:
-        db.query(VendedorClientePorcentaje).filter(VendedorClientePorcentaje.vendedor_id == vendedor_id).delete()
+        # La eliminación en cascada debería estar configurada en el modelo SQLAlchemy.
+        # Si no, la siguiente línea sería necesaria:
+        # db.query(VendedorClientePorcentaje).filter(VendedorClientePorcentaje.vendedor_id == vendedor_id).delete()
         db.delete(db_vendedor)
         db.commit()
     return db_vendedor
 
-# CRUD para VendedorClientePorcentaje
+# --- CRUD PARA ASIGNACIONES ---
+
 def get_asignacion(db: Session, vendedor_id: int, cliente_id: int) -> Optional[VendedorClientePorcentaje]:
     return db.query(VendedorClientePorcentaje).filter_by(vendedor_id=vendedor_id, cliente_id=cliente_id).first()
 
 def add_cliente_a_vendedor(
     db: Session, *, vendedor: Vendedor, asignacion_in: VendedorClientePorcentajeCreate
 ) -> VendedorClientePorcentaje:
-    # Verificar que el cliente exista
     cliente_db = db.query(Cliente).filter(Cliente.id == asignacion_in.cliente_id).first()
     if not cliente_db:
         raise ValueError(f"Cliente con ID {asignacion_in.cliente_id} no encontrado.")
 
-    # Verificar si ya existe una asignación para este vendedor y cliente
     db_asignacion_existente = get_asignacion(db, vendedor_id=vendedor.id, cliente_id=asignacion_in.cliente_id)
     if db_asignacion_existente:
         raise ValueError(f"El vendedor ya tiene una asignación para el cliente ID {asignacion_in.cliente_id}.")
@@ -112,27 +113,34 @@ def add_cliente_a_vendedor(
     db.add(db_asignacion)
     db.commit()
     db.refresh(db_asignacion)
-    db.refresh(vendedor, attribute_names=['clientes_asignados']) # Recargar la relación en el vendedor
     return db_asignacion
 
 def update_porcentaje_cliente_vendedor(
     db: Session, *, db_asignacion: VendedorClientePorcentaje, asignacion_in: VendedorClientePorcentajeUpdate
 ) -> VendedorClientePorcentaje:
+    """
+    Actualiza una asignación existente.
+    Acepta el objeto de asignación que el endpoint ya ha recuperado.
+    """
     db_asignacion.porcentaje_bono = asignacion_in.porcentaje_bono
     db.add(db_asignacion)
     db.commit()
     db.refresh(db_asignacion)
-    # También podrías necesitar refrescar el vendedor si es relevante
-    # db.refresh(db_asignacion.vendedor, attribute_names=['clientes_asignados'])
+    # Refrescar la relación 'cliente' para evitar el DetachedInstanceError en la respuesta.
+    # Esto es crucial si el objeto 'db_asignacion' original fue cargado sin esta relación.
+    db.refresh(db_asignacion, attribute_names=['cliente'])
     return db_asignacion
 
 def remove_cliente_de_vendedor(db: Session, *, vendedor_id: int, cliente_id: int) -> Optional[VendedorClientePorcentaje]:
-    db_asignacion = get_asignacion(db, vendedor_id=vendedor_id, cliente_id=cliente_id)
+    """
+    Encuentra y elimina una asignación, cargando las relaciones necesarias
+    para evitar el error DetachedInstanceError en la respuesta.
+    """
+    db_asignacion = db.query(VendedorClientePorcentaje).options(
+        selectinload(VendedorClientePorcentaje.cliente)
+    ).filter_by(vendedor_id=vendedor_id, cliente_id=cliente_id).first()
+    
     if db_asignacion:
-        vendedor = db_asignacion.vendedor # Guardar referencia al vendedor antes de borrar
         db.delete(db_asignacion)
         db.commit()
-        if vendedor:
-             db.refresh(vendedor, attribute_names=['clientes_asignados']) # Recargar la relación en el vendedor
-        return db_asignacion
-    return None
+    return db_asignacion

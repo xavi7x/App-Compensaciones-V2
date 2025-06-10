@@ -4,6 +4,25 @@ import {
     Vendedor, VendedorCreate, VendedorUpdate, 
     VendedorClientePorcentaje, VendedorClientePorcentajeCreate, VendedorClientePorcentajeUpdate 
 } from '../types/vendedor';
+import apiClient from './apiClient';
+
+// Tipo para la actualización de porcentajes
+export interface PorcentajeUpdate {
+  cliente_id: number;
+  porcentaje_bono: number;
+}
+
+// Función para actualizar porcentajes
+export const updateVendedorPorcentajes = async (
+  vendedorId: number, 
+  updates: PorcentajeUpdate[]
+) => {
+  const response = await apiClient.put(
+    `/vendedores/${vendedorId}/update-porcentajes`,
+    { updates }
+  );
+  return response.data;
+};
 
 interface VendedoresResponse { // Para la respuesta paginada
     items: Vendedor[];

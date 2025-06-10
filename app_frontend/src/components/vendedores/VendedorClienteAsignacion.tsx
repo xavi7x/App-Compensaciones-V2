@@ -9,38 +9,29 @@ import { toast } from 'react-toastify';
 interface VendedorClienteAsignacionProps {
   vendedor: Vendedor; 
   onAsignacionesUpdated: () => void; 
-  // todosLosClientes?: Cliente[]; // Opcional: si la lista de clientes se pasa como prop
 }
 
 const VendedorClienteAsignacion: React.FC<VendedorClienteAsignacionProps> = ({
   vendedor,
   onAsignacionesUpdated,
-  // todosLosClientes: propTodosLosClientes, // Descomenta si recibes clientes como prop
 }) => {
-  // Estado local para las asignaciones del vendedor actual, se inicializa con las del prop.
-  // Esto permite modificar la lista visualmente antes de que onAsignacionesUpdated refresque todo.
   const [asignaciones, setAsignaciones] = useState<VendedorClientePorcentaje[]>([]);
   const [todosLosClientes, setTodosLosClientes] = useState<Cliente[]>([]);
   const [selectedClienteId, setSelectedClienteId] = useState<string>('');
-  const [nuevoPorcentaje, setNuevoPorcentaje] = useState<string>('10'); // Ingresar como porcentaje directo, ej: 10 para 10%
+  const [nuevoPorcentaje, setNuevoPorcentaje] = useState<string>('10'); 
   const [isLoading, setIsLoading] = useState(false);
   const [isLoadingClientes, setIsLoadingClientes] = useState(true);
 
-  // Cargar todos los clientes para el dropdown si no se pasan como prop
   useEffect(() => {
-    // if (propTodosLosClientes) { // Si los clientes se pasan como prop
-    //   setTodosLosClientes(propTodosLosClientes);
-    //   setIsLoadingClientes(false);
-    // } else { // Si no, cargarlos aquí
       const cargarTodosLosClientes = async () => {
         setIsLoadingClientes(true);
         try {
-          const response = await clienteService.getAllClientes(1, 1000, ''); // Ajusta parámetros según tu servicio
+          const response = await clienteService.getAllClientes(1, 1000, ''); 
           if (response && Array.isArray(response.items)) {
             setTodosLosClientes(response.items);
           } else {
             console.warn("Respuesta inesperada de clienteService.getAllClientes:", response);
-            toast.error("No se pudo cargar la lista de clientes correctamente para las asignaciones.");
+            toast.error("No se pudo cargar la lista de clientes para las asignaciones.");
             setTodosLosClientes([]);
           }
         } catch (error) {
@@ -52,10 +43,8 @@ const VendedorClienteAsignacion: React.FC<VendedorClienteAsignacionProps> = ({
         }
       };
       cargarTodosLosClientes();
-    // }
-  }, [/* propTodosLosClientes */]); // Dependencia si usas prop
+  }, []);
 
-  // Sincronizar el estado local 'asignaciones' con el prop 'vendedor.clientes_asignados'
   useEffect(() => {
     setAsignaciones(vendedor.clientes_asignados || []);
   }, [vendedor.clientes_asignados]);
@@ -67,25 +56,23 @@ const VendedorClienteAsignacion: React.FC<VendedorClienteAsignacionProps> = ({
       return;
     }
     const clienteIdNum = parseInt(selectedClienteId, 10);
-    // Porcentaje se ingresa como 10 para 10%, se convierte a decimal para el backend
     const porcentajeInput = parseFloat(nuevoPorcentaje); 
 
     if (isNaN(clienteIdNum) || isNaN(porcentajeInput) || porcentajeInput <= 0 || porcentajeInput > 100) {
       toast.error("Cliente o porcentaje inválido. El porcentaje debe ser un número entre 1 y 100 (ej: 10 para 10%).");
       return;
     }
-    const porcentajeDecimal = porcentajeInput / 100; // Convertir a decimal para el backend
+    const porcentajeDecimal = porcentajeInput / 100; 
 
     setIsLoading(true);
     try {
       const asignacionData: VendedorClientePorcentajeCreate = { 
         cliente_id: clienteIdNum, 
-        porcentaje_bono: porcentajeDecimal // Enviar como decimal
+        porcentaje_bono: porcentajeDecimal 
       };
-      // Asume que addClienteToVendedor espera el ID del vendedor y los datos de la asignación
       await vendedorService.addClienteToVendedor(vendedor.id, asignacionData);
       toast.success("Cliente asignado exitosamente.");
-      onAsignacionesUpdated(); // Esto refrescará VendedoresPage y, por ende, el prop 'vendedor' aquí
+      onAsignacionesUpdated(); 
       setSelectedClienteId('');
       setNuevoPorcentaje('10');
     } catch (err: any) {
@@ -96,30 +83,31 @@ const VendedorClienteAsignacion: React.FC<VendedorClienteAsignacionProps> = ({
   };
 
   const handleUpdatePorcentaje = async (asigToUpdate: VendedorClientePorcentaje) => {
+    // **NUEVA VERIFICACIÓN CRÍTICA**
+    if (typeof asigToUpdate.cliente_id !== 'number') {
+        toast.error("Error: El ID del cliente para esta asignación no está definido. No se puede actualizar.");
+        console.error("Datos de asignación incompletos:", asigToUpdate);
+        return;
+    }
+
     const currentPorcentajeDisplay = (asigToUpdate.porcentaje_bono * 100).toString();
     const nuevoPorcentajeStr = prompt(`Ingrese el nuevo porcentaje para ${asigToUpdate.cliente?.razon_social || `Cliente ID ${asigToUpdate.cliente_id}` } (actual: ${currentPorcentajeDisplay}%):`, currentPorcentajeDisplay);
     
-    if (nuevoPorcentajeStr === null) return; // Usuario canceló
+    if (nuevoPorcentajeStr === null) return; 
 
     const porcentajeInput = parseFloat(nuevoPorcentajeStr);
     if (isNaN(porcentajeInput) || porcentajeInput <= 0 || porcentajeInput > 100) {
       toast.error("Porcentaje inválido. Debe ser un número entre 1 y 100.");
       return;
     }
-    const porcentajeDecimal = porcentajeInput / 100; // Convertir a decimal
+    const porcentajeDecimal = porcentajeInput / 100; 
 
     setIsLoading(true);
     try {
       const updateData: VendedorClientePorcentajeUpdate = { porcentaje_bono: porcentajeDecimal };
-      // Asume que updateClienteAsignacion espera el ID de la asignación específica (asigToUpdate.id)
-      // o una combinación de vendedor_id y cliente_id si el backend está estructurado así.
-      // Si el backend usa el ID de la asignación:
-      if (asigToUpdate.id === undefined) {
-        toast.error("ID de asignación no encontrado. No se puede actualizar.");
-        setIsLoading(false);
-        return;
-      }
-      await vendedorService.updateClienteAsignacion(asigToUpdate.id, updateData); // Usar ID de asignación
+      
+      await vendedorService.updateClienteAsignacion(vendedor.id, asigToUpdate.cliente_id, updateData);
+      
       toast.success("Porcentaje actualizado exitosamente.");
       onAsignacionesUpdated();
     } catch (err: any) {
@@ -130,16 +118,18 @@ const VendedorClienteAsignacion: React.FC<VendedorClienteAsignacionProps> = ({
   };
 
   const handleRemoveAsignacion = async (asigToRemove: VendedorClientePorcentaje) => {
+    // **NUEVA VERIFICACIÓN CRÍTICA**
+    if (typeof asigToRemove.cliente_id !== 'number') {
+        toast.error("Error: El ID del cliente para esta asignación no está definido. No se puede eliminar.");
+        console.error("Datos de asignación incompletos:", asigToRemove);
+        return;
+    }
+
     if (window.confirm(`¿Seguro que quieres quitar la asignación de ${asigToRemove.cliente?.razon_social || `Cliente ID ${asigToRemove.cliente_id}`}?`)) {
       setIsLoading(true);
       try {
-        // Asume que removeClienteFromVendedor espera el ID de la asignación específica
-        if (asigToRemove.id === undefined) {
-          toast.error("ID de asignación no encontrado. No se puede eliminar.");
-          setIsLoading(false);
-          return;
-        }
-        await vendedorService.removeClienteFromVendedor(asigToRemove.id); // Usar ID de asignación
+        await vendedorService.removeClienteFromVendedor(vendedor.id, asigToRemove.cliente_id);
+        
         toast.success("Asignación eliminada exitosamente.");
         onAsignacionesUpdated();
       } catch (err: any) {
@@ -150,7 +140,6 @@ const VendedorClienteAsignacion: React.FC<VendedorClienteAsignacionProps> = ({
     }
   };
 
-  // Filtrar clientes que aún no están asignados a este vendedor
   const clientesDisponibles = todosLosClientes.filter(
     cliente => !asignaciones.some(asig => asig.cliente_id === cliente.id)
   );
@@ -168,10 +157,10 @@ const VendedorClienteAsignacion: React.FC<VendedorClienteAsignacionProps> = ({
         {asignaciones.length > 0 ? (
           <ul className="divide-y divide-gray-200">
             {asignaciones.map(asig => (
-              <li key={asig.id /* Usar el ID de la asignación como key */} className="flex justify-between items-center p-3 hover:bg-gray-50">
+              <li key={asig.id !== undefined ? asig.id : `cliente-${asig.cliente_id}`} className="flex justify-between items-center p-3 hover:bg-gray-50">
                 <div>
                   <span className="font-medium text-sm text-gray-800">{asig.cliente?.razon_social || `Cliente ID ${asig.cliente_id}`}</span>
-                  <span className="text-gray-600 text-sm">: {(asig.porcentaje_bono * 100).toFixed(1)}%</span> {/* Mostrar con 1 decimal */}
+                  <span className="text-gray-600 text-sm">: {(asig.porcentaje_bono * 100).toFixed(1)}%</span>
                 </div>
                 <div className="space-x-2">
                    <button type="button" onClick={() => handleUpdatePorcentaje(asig)} className="text-xs text-blue-600 hover:text-blue-800 disabled:opacity-50" disabled={isLoading}>Editar %</button>
