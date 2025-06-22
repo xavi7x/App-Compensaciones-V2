@@ -89,9 +89,13 @@ const ClientesPage: React.FC = () => {
 
   const handleOpenCreateModal = () => { setEditingCliente(null); setIsFormModalOpen(true); };
   const handleOpenEditModal = (cliente: Cliente) => { 
-    if (cliente && typeof cliente.id === 'number') {
-        setEditingCliente(cliente); setIsFormModalOpen(true);
-    } else { toast.error("No se puede editar: ID de cliente inválido.");}
+    if (cliente?.id && typeof cliente.id === 'number' && !isNaN(cliente.id)) {
+      setEditingCliente(cliente); 
+      setIsFormModalOpen(true);
+    } else {
+      toast.error("No se puede editar: Cliente inválido.");
+      console.error("Cliente inválido recibido para edición:", cliente);
+    }
   };
   const handleOpenUploadModal = () => { setIsUploadModalOpen(true); };
   const handleCloseModals = () => { setIsFormModalOpen(false); setIsUploadModalOpen(false); setEditingCliente(null); };

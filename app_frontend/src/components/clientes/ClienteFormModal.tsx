@@ -2,14 +2,16 @@
 import React, { useEffect } from 'react';
 import { useForm, SubmitHandler } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Cliente, ClienteFormData, clienteSchema } from '../../types/cliente'; // Importa ClienteFormData y clienteSchema
+import { Cliente } from '../../types/cliente';
+import { clienteSchema } from '../../types/cliente';
+import type { ClienteFormData } from '../../types/cliente';
 import clienteService from '../../services/clienteService';
-import { toast } from 'react-toastify'; // Para notificaciones
+import { toast } from 'react-toastify';
 
 interface ClienteFormModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSaveSuccess: () => void; // Cambiado para reflejar solo éxito y refrescar lista
+  onSaveSuccess: () => void;
   clienteToEdit?: Cliente | null;
 }
 
@@ -24,7 +26,7 @@ const ClienteFormModal: React.FC<ClienteFormModalProps> = ({
     handleSubmit,
     reset,
     formState: { errors, isSubmitting },
-    setValue, // Para setear valores al editar
+    setValue,
   } = useForm<ClienteFormData>({
     resolver: zodResolver(clienteSchema),
   });
@@ -32,43 +34,35 @@ const ClienteFormModal: React.FC<ClienteFormModalProps> = ({
   useEffect(() => {
     if (isOpen) {
       if (clienteToEdit) {
-        // Poblar formulario con datos del cliente a editar
-        setValue('razon_social', clienteToEdit.razon_social);
-        setValue('rut', clienteToEdit.rut);
-        setValue('ramo', clienteToEdit.ramo || '');
-        setValue('ubicacion', clienteToEdit.ubicacion || '');
-      } else {
-        // Resetear formulario para nuevo cliente
-        reset({
-          razon_social: '',
-          rut: '',
-          ramo: '',
-          ubicacion: '',
+        // Setear todos los campos del cliente
+        Object.entries(clienteToEdit).forEach(([key, value]) => {
+          if (key in clienteSchema.shape) {
+            setValue(key as keyof ClienteFormData, value || '');
+          }
         });
+      } else {
+        reset();
       }
     }
   }, [isOpen, clienteToEdit, setValue, reset]);
 
-  if (!isOpen) {
-    return null;
-  }
-
   const processSubmit: SubmitHandler<ClienteFormData> = async (data) => {
     try {
-      if (clienteToEdit && clienteToEdit.id) {
+      if (clienteToEdit?.id) {
         await clienteService.updateCliente(clienteToEdit.id, data);
         toast.success('Cliente actualizado exitosamente!');
       } else {
         await clienteService.createCliente(data);
         toast.success('Cliente creado exitosamente!');
       }
-      onSaveSuccess(); // Llama al callback para refrescar la lista y cerrar
+      onSaveSuccess();
     } catch (err: any) {
-      console.error("Error guardando cliente:", err);
       const errorMsg = err.response?.data?.detail || 'Error al guardar el cliente.';
       toast.error(errorMsg);
     }
   };
+
+  if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 bg-gray-600 bg-opacity-75 overflow-y-auto h-full w-full z-50 flex justify-center items-center p-4">
@@ -78,7 +72,9 @@ const ClienteFormModal: React.FC<ClienteFormModalProps> = ({
             {clienteToEdit ? 'Editar Cliente' : 'Nuevo Cliente'}
           </h2>
           <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
           </button>
         </div>
 
@@ -95,6 +91,7 @@ const ClienteFormModal: React.FC<ClienteFormModalProps> = ({
             />
             {errors.razon_social && <p className="mt-1 text-xs text-red-500">{errors.razon_social.message}</p>}
           </div>
+
           <div>
             <label htmlFor="rut" className="block text-sm font-medium text-gray-700">
               RUT <span className="text-red-500">*</span>
@@ -103,13 +100,13 @@ const ClienteFormModal: React.FC<ClienteFormModalProps> = ({
               id="rut"
               type="text"
               {...register('rut')}
-              disabled={!!clienteToEdit} // No permitir editar RUT
+              disabled={!!clienteToEdit}
               className={`mt-1 block w-full px-3 py-2 border ${errors.rut ? 'border-red-500' : 'border-gray-300'} rounded-md shadow-sm focus:outline-none focus:ring-marrs-green focus:border-marrs-green sm:text-sm ${!!clienteToEdit ? 'bg-gray-100 cursor-not-allowed' : ''}`}
               placeholder="Ej: 12345678-9"
             />
-            {clienteToEdit && <p className="text-xs text-gray-500 mt-1">El RUT no se puede modificar al editar.</p>}
             {errors.rut && <p className="mt-1 text-xs text-red-500">{errors.rut.message}</p>}
           </div>
+
           <div>
             <label htmlFor="ramo" className="block text-sm font-medium text-gray-700">Ramo</label>
             <input
@@ -120,6 +117,7 @@ const ClienteFormModal: React.FC<ClienteFormModalProps> = ({
             />
             {errors.ramo && <p className="mt-1 text-xs text-red-500">{errors.ramo.message}</p>}
           </div>
+
           <div>
             <label htmlFor="ubicacion" className="block text-sm font-medium text-gray-700">Ubicación</label>
             <input
@@ -130,6 +128,7 @@ const ClienteFormModal: React.FC<ClienteFormModalProps> = ({
             />
             {errors.ubicacion && <p className="mt-1 text-xs text-red-500">{errors.ubicacion.message}</p>}
           </div>
+
           <div className="flex justify-end space-x-3 pt-4">
             <button
               type="button"
@@ -144,7 +143,7 @@ const ClienteFormModal: React.FC<ClienteFormModalProps> = ({
               disabled={isSubmitting}
               className="px-4 py-2 text-sm font-medium text-white bg-marrs-green rounded-md hover:bg-opacity-80 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-marrs-green disabled:opacity-50"
             >
-              {isSubmitting ? 'Guardando...' : (clienteToEdit ? 'Actualizar Cliente' : 'Crear Cliente')}
+              {isSubmitting ? 'Guardando...' : (clienteToEdit ? 'Actualizar' : 'Crear')}
             </button>
           </div>
         </form>

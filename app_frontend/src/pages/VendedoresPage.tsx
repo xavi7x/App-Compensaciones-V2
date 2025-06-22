@@ -18,7 +18,7 @@ const VendedoresPage: React.FC = () => {
 
   // Búsqueda
   const [searchTerm, setSearchTerm] = useState('');
-  const debouncedSearchTerm = useDebounce(searchTerm, 100); // <-- 2. USAR EL HOOK (500ms de retraso)
+  const debouncedSearchTerm = useDebounce(searchTerm, 300); // <-- 2. USAR EL HOOK 
 
   const [isVendedorFormModalOpen, setIsVendedorFormModalOpen] = useState(false);
   const [editingVendedor, setEditingVendedor] = useState<Vendedor | null>(null);

@@ -20,8 +20,18 @@ if project_root_dir not in sys.path:
 try:
     from app.core.config import settings
     print(f"DEBUG: settings importado. DATABASE_URL: {settings.DATABASE_URL}")
+    
+    # --- INICIO DE LA CORRECCIÓN ---
+    # Importa tu Base declarativa
     from app.db.base_class import Base
     print("DEBUG: Base importada de app.db.base_class")
+
+    # ¡Importa TODOS tus modelos aquí para que Base los conozca!
+    from app.models.user import User
+    from app.models.cliente import Cliente
+    from app.models.vendedor import Vendedor, VendedorClientePorcentaje
+    from app.models.factura import Factura
+    # --- FIN DE LA CORRECCIÓN ---
 
     # Importar y configurar PyMySQL para que actúe como MySQLdb
     import pymysql
@@ -37,6 +47,7 @@ config = context.config
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
+# Esta es la metadata que Alembic usará para comparar con la base de datos
 target_metadata = Base.metadata
 print(f"DEBUG: target_metadata configurado con los modelos de Base: {Base.metadata.tables.keys()}")
 

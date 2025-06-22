@@ -53,3 +53,11 @@ class Vendedor(VendedorInDBBase): # Schema para respuestas API
 class VendedoresResponse(BaseModel):
     items: List[Vendedor]
     total_count: int
+
+class VendedorSimple(BaseModel):
+    id: int
+    nombre_completo: str
+    rut: str
+
+    class Config:
+        from_attributes = True

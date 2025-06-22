@@ -1,6 +1,6 @@
 // src/services/clienteService.ts
 import apiClient from './apiClient';
-import { Cliente, ClienteCreate, ClienteUpdate } from '../types/cliente';
+import { Cliente, ClienteCreate, ClienteUpdate, ClienteFormData, ClienteUpdateData } from '../types/cliente';
 
 interface ClientesResponse {
   items: Cliente[];
@@ -8,9 +8,9 @@ interface ClientesResponse {
 }
 
 const getAllClientes = async (
-    skip: number = 0, 
-    limit: number = 100, 
-    search: string = ''
+  skip: number = 0, 
+  limit: number = 100, 
+  search: string = ''
 ): Promise<ClientesResponse> => {
   const params: any = { skip, limit };
   if (search) {
@@ -25,22 +25,29 @@ const getClienteById = async (id: number): Promise<Cliente> => {
   return response.data;
 };
 
-const createCliente = async (data: ClienteCreate): Promise<Cliente> => {
-  const response = await apiClient.post<Cliente>('/clientes/', data);
+const createCliente = async (data: ClienteFormData): Promise<Cliente> => {
+  // Asegurar que el RUT esté en formato correcto
+  const formattedData = {
+    ...data,
+    rut: data.rut.replace(/\./g, '') // Eliminar puntos del RUT
+  };
+  const response = await apiClient.post<Cliente>('/clientes/', formattedData);
   return response.data;
 };
 
-const updateCliente = async (id: number, data: ClienteUpdate): Promise<Cliente> => {
-  const response = await apiClient.put<Cliente>(`/clientes/${id}`, data);
+const updateCliente = async (id: number, data: ClienteFormData): Promise<Cliente> => {
+  // Eliminar campos que no deberían ser actualizados
+  const { rut, ...updateData } = data;
+  
+  const response = await apiClient.put<Cliente>(`/clientes/${id}`, updateData);
   return response.data;
 };
 
-const deleteCliente = async (id: number): Promise<Cliente> => { // El backend devuelve el cliente eliminado
-  const response = await apiClient.delete<Cliente>(`/clientes/${id}`);
-  return response.data;
+const deleteCliente = async (id: number): Promise<void> => {
+  await apiClient.delete(`/clientes/${id}`);
 };
 
-const uploadClientesCSV = async (file: File): Promise<Cliente[]> => { // O un tipo de respuesta más complejo
+const uploadClientesCSV = async (file: File): Promise<Cliente[]> => {
   const formData = new FormData();
   formData.append('file', file);
   const response = await apiClient.post<Cliente[]>('/clientes/upload-csv/', formData, {
@@ -51,13 +58,17 @@ const uploadClientesCSV = async (file: File): Promise<Cliente[]> => { // O un ti
   return response.data;
 };
 
-const clienteService = {
+const getAllClientesSimple = async (): Promise<Cliente[]> => {
+  const response = await apiClient.get<ClientesResponse>('/clientes/', { params: { skip: 0, limit: 1000 } });
+  return response.data.items;
+};
+
+export default {
   getAllClientes,
   getClienteById,
   createCliente,
   updateCliente,
   deleteCliente,
   uploadClientesCSV,
+  getAllClientesSimple
 };
-
-export default clienteService;

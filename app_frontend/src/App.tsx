@@ -6,10 +6,11 @@ import RegisterPage from './pages/RegisterPage';
 import ProtectedRoute from './components/ProtectedRoute';
 import axios from "axios";
 
-import HomePage from './pages/HomePage'; //
+import HomePage from './pages/HomePage';
 import DashboardPage from './pages/DashboardPage';
 import ClientesPage from './pages/ClientesPage';
 import VendedoresPage from './pages/VendedoresPage'; 
+import FacturacionPage from './pages/FacturacionPage'; // <-- Importar la nueva página
 import 'react-toastify/dist/ReactToastify.css'; 
 import { ToastContainer } from "react-toastify";
 
@@ -25,7 +26,7 @@ axios.interceptors.request.use((config) => {
 function App() {
   return (
     <Router>
-      <ToastContainer // Contenedor para las notificaciones toast
+      <ToastContainer
         position="top-right"
         autoClose={5000}
         hideProgressBar={false}
@@ -35,7 +36,7 @@ function App() {
         pauseOnFocusLoss
         draggable
         pauseOnHover
-        theme="colored" // O "light" o "dark"
+        theme="colored"
       />
       <Routes>
         <Route path="/login" element={<LoginPage />} />
@@ -46,6 +47,7 @@ function App() {
             <Route path="/dashboard" element={<DashboardPage />} />
             <Route path="/clientes" element={<ClientesPage />} />
             <Route path="/vendedores" element={<VendedoresPage />} />
+            <Route path="/facturacion" element={<FacturacionPage />} /> {/* <-- AÑADIR LA NUEVA RUTA */}
           </Route>
         </Route>
       </Routes>

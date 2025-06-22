@@ -13,6 +13,8 @@ from .vendedor import (
     VendedorClientePorcentaje, VendedorClientePorcentajeCreate, VendedorClientePorcentajeUpdate
 )
 
+from . import factura
+
 class Token(BaseModel):
     access_token: str
     token_type: str

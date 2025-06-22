@@ -58,7 +58,7 @@ const removeClienteFromVendedor = async (vendedorId: number, clienteId: number):
 const uploadVendedoresCSV = async (file: File): Promise<Vendedor[]> => {
     const formData = new FormData();
     formData.append('file', file);
-  
+
     const response = await apiClient.post<Vendedor[]>('/vendedores/upload-csv/', formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
@@ -67,6 +67,11 @@ const uploadVendedoresCSV = async (file: File): Promise<Vendedor[]> => {
     return response.data;
 };
 
+// --- NUEVA FUNCIÓN PARA SELECTORES ---
+const getAllVendedoresSimple = async (): Promise<Vendedor[]> => {
+  const response = await apiClient.get<VendedoresResponse>('/vendedores/', { params: { skip: 0, limit: 1000 } });
+  return response.data.items;
+};
 
 const vendedorService = {
   getAllVendedores,
@@ -77,7 +82,8 @@ const vendedorService = {
   addClienteToVendedor,
   updateClienteAsignacion,
   removeClienteFromVendedor,
-  uploadVendedoresCSV, // <-- Exportar la nueva función
+  uploadVendedoresCSV,
+  getAllVendedoresSimple, 
 };
 
 export default vendedorService;

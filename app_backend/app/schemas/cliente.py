@@ -42,3 +42,11 @@ class Cliente(ClienteInDBBase):
 class ClientesResponse(BaseModel):
     items: List[Cliente] # Usa el schema Cliente, que DEBE incluir el 'id'.
     total_count: int
+
+class ClienteSimple(BaseModel):
+    id: int
+    razon_social: str
+    rut: str
+
+    class Config:
+        from_attributes = True
