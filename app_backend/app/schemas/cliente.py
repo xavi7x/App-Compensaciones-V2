@@ -1,52 +1,48 @@
 # app/schemas/cliente.py
 from pydantic import BaseModel, constr, Field
-from typing import Optional
+from typing import Optional, List
 from datetime import datetime
-from typing import List
-    
-# Propiedades base compartidas (no incluye 'id' porque no siempre se espera en la entrada)
+
+# Propiedades base que se usan para crear y leer clientes
 class ClienteBase(BaseModel):
     razon_social: str = Field(..., min_length=1, max_length=255)
     rut: constr(min_length=7, max_length=12)
     ramo: Optional[str] = Field(None, max_length=100)
     ubicacion: Optional[str] = Field(None, max_length=255)
 
-# Propiedades para recibir en la creación
+# Propiedades para recibir al crear un nuevo cliente
 class ClienteCreate(ClienteBase):
     pass
 
-# Propiedades para recibir en la actualización
+# Propiedades que se pueden actualizar (todas opcionales)
 class ClienteUpdate(BaseModel):
     razon_social: Optional[str] = Field(None, min_length=1, max_length=255)
     rut: Optional[constr(min_length=7, max_length=12)] = None
     ramo: Optional[str] = Field(None, max_length=100)
     ubicacion: Optional[str] = Field(None, max_length=255)
 
-# Esta clase es la base para las respuestas que incluyen datos de la BD.
+# Propiedades que vienen de la base de datos, incluyendo el ID
 class ClienteInDBBase(ClienteBase):
     id: int
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
 
     class Config:
-        from_attributes = True # Para Pydantic v2. Si usas Pydantic v1, debe ser orm_mode = True
-                               # Esta línea permite que Pydantic lea los atributos del modelo SQLAlchemy.
-                               # Si estás en Pydantic v1 y esto no funciona, prueba orm_mode = True
+        from_attributes = True
 
-# Schema para retornar al cliente (API)
-# Esta clase hereda de ClienteInDBBase, por lo tanto, DEBERÍA incluir 'id'.
+# Schema principal para las respuestas de la API
 class Cliente(ClienteInDBBase):
-    pass # No necesita campos adicionales si ClienteInDBBase ya tiene todo lo necesario para la respuesta.
+    pass
 
-# Schema para respuesta paginada
+# Schema para la respuesta paginada de la tabla de clientes
 class ClientesResponse(BaseModel):
-    items: List[Cliente] # Usa el schema Cliente, que DEBE incluir el 'id'.
+    items: List[Cliente]
     total_count: int
 
+# --- SCHEMA SIMPLIFICADO CORREGIDO ---
 class ClienteSimple(BaseModel):
     id: int
     razon_social: str
-    rut: str
 
     class Config:
         from_attributes = True

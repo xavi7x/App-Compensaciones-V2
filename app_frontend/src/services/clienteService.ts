@@ -1,6 +1,6 @@
 // src/services/clienteService.ts
 import apiClient from './apiClient';
-import { Cliente, ClienteCreate, ClienteUpdate, ClienteFormData, ClienteUpdateData } from '../types/cliente';
+import { Cliente, ClienteCreate, ClienteUpdate, ClienteFormData, ClienteSimple } from '../types/cliente';
 
 interface ClientesResponse {
   items: Cliente[];
@@ -26,19 +26,16 @@ const getClienteById = async (id: number): Promise<Cliente> => {
 };
 
 const createCliente = async (data: ClienteFormData): Promise<Cliente> => {
-  // Asegurar que el RUT esté en formato correcto
   const formattedData = {
     ...data,
-    rut: data.rut.replace(/\./g, '') // Eliminar puntos del RUT
+    rut: data.rut.replace(/\./g, '')
   };
   const response = await apiClient.post<Cliente>('/clientes/', formattedData);
   return response.data;
 };
 
 const updateCliente = async (id: number, data: ClienteFormData): Promise<Cliente> => {
-  // Eliminar campos que no deberían ser actualizados
   const { rut, ...updateData } = data;
-  
   const response = await apiClient.put<Cliente>(`/clientes/${id}`, updateData);
   return response.data;
 };
@@ -58,9 +55,15 @@ const uploadClientesCSV = async (file: File): Promise<Cliente[]> => {
   return response.data;
 };
 
-const getAllClientesSimple = async (): Promise<Cliente[]> => {
-  const response = await apiClient.get<ClientesResponse>('/clientes/', { params: { skip: 0, limit: 1000 } });
-  return response.data.items;
+// *** CORREGIDO Y FINAL ***
+// La función ahora ACEPTA el token y lo envía explícitamente en los headers.
+const getAllClientesSimple = async (token: string): Promise<ClienteSimple[]> => {
+  const response = await apiClient.get<ClienteSimple[]>('/clientes/simple', {
+      headers: {
+          'Authorization': `Bearer ${token}`
+      }
+  });
+  return response.data;
 };
 
 export default {

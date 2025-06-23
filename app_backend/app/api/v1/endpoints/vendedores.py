@@ -11,6 +11,42 @@ from app.models.user import User as UserModel
 
 router = APIRouter()
 
+# --- RUTA CRÍTICA AÑADIDA ---
+@router.get("/{vendedor_id}/clientes-asignados", response_model=List[schemas.cliente.ClienteSimple])
+def read_clientes_asignados_por_vendedor(
+    *,
+    db: Session = Depends(deps.get_db),
+    vendedor_id: int,
+    current_user: UserModel = Depends(deps.get_current_user)
+) -> Any:
+    """
+    Obtiene la lista simplificada de clientes asignados a un vendedor específico.
+    """
+    vendedor = crud.crud_vendedor.get_vendedor(db=db, vendedor_id=vendedor_id)
+    if not vendedor:
+        raise HTTPException(status_code=404, detail="Vendedor no encontrado")
+    
+    # Extrae los clientes de las asignaciones y los convierte al schema simple
+    clientes_asignados = [asignacion.cliente for asignacion in vendedor.clientes_asignados if asignacion.cliente]
+    clientes_simples = [
+        schemas.cliente.ClienteSimple(id=c.id, razon_social=c.razon_social)
+        for c in clientes_asignados
+    ]
+    return clientes_simples
+
+# --- NUEVA RUTA PARA LISTA SIMPLIFICADA ---
+@router.get("/simple", response_model=List[schemas.vendedor.VendedorSimple])
+def read_vendedores_simple(
+    db: Session = Depends(deps.get_db),
+    current_user: UserModel = Depends(deps.get_current_user)
+) -> Any:
+    """
+    Obtiene una lista simplificada de todos los vendedores (id, nombre_completo).
+    Ideal para usar en dropdowns en el frontend sin paginación.
+    """
+    vendedores, _ = crud.crud_vendedor.get_vendedores(db, skip=0, limit=10000) # Limite alto para traer todos
+    return vendedores
+
 @router.post("/", response_model=schemas.vendedor.Vendedor, status_code=status.HTTP_201_CREATED)
 def create_vendedor_endpoint(
     *,

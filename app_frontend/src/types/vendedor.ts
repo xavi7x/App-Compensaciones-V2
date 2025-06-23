@@ -1,9 +1,9 @@
 // src/types/vendedor.ts
-import { Cliente } from './cliente'; // Para mostrar info del cliente en la asignación
+import { Cliente } from './cliente';
 
 export interface VendedorClientePorcentajeBase {
   cliente_id: number;
-  porcentaje_bono: number; // Frontend podría manejarlo como 0-100 y convertir antes de enviar
+  porcentaje_bono: number;
 }
 
 export interface VendedorClientePorcentajeCreate extends VendedorClientePorcentajeBase {}
@@ -14,7 +14,7 @@ export interface VendedorClientePorcentajeUpdate {
 
 export interface VendedorClientePorcentaje extends VendedorClientePorcentajeBase {
   id: number;
-  cliente?: Cliente; // Cliente completo para mostrar en la UI
+  cliente?: Cliente;
 }
 
 export interface VendedorBase {
@@ -36,9 +36,9 @@ export interface Vendedor extends VendedorBase {
   clientes_asignados: VendedorClientePorcentaje[];
 }
 
-// Esquema de Zod para la validación del formulario de vendedor
-// (Lo implementaremos en un paso de refinamiento, pero puedes empezar a definirlo)
-// import { z } from 'zod';
-// import { validarRutChileno } from '../utils/validationUtils';
-// export const vendedorSchema = z.object({ ... });
-// export type VendedorFormData = z.infer<typeof vendedorSchema>;
+// --- NUEVA INTERFAZ AÑADIDA ---
+// Esta es la interfaz para la lista simplificada.
+export interface VendedorSimple {
+  id: number;
+  nombre_completo: string;
+}
