@@ -1,110 +1,141 @@
 // src/pages/LoginPage.tsx
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, FormEvent } from 'react';
 import { useNavigate, Link, useLocation } from 'react-router-dom';
 import authService from '../services/authService';
 import { useAuth } from '../contexts/AuthContext';
+import { toast } from 'react-toastify';
 
 const LoginPage: React.FC = () => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
-  const [totpCode, setTotpCode] = useState('');
-  const [error, setError] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(false); // Estado de carga para el submit del formulario
-  const [requiresTotp, setRequiresTotp] = useState(false);
-  const { login: contextLogin, isAuthenticated, isLoading: authIsLoading } = useAuth(); // isLoading del contexto
+  const [isLoading, setIsLoading] = useState(false);
+
+  const { login: contextLogin, isAuthenticated, isLoading: authIsLoading } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-  const from = location.state?.from?.pathname || "/";
+  const from = location.state?.from?.pathname || "/dashboard";
 
   useEffect(() => {
-    // Si el usuario ya está autenticado (y el contexto no está cargando su estado inicial),
-    // redirige a la página 'from' o al dashboard.
-    if (isAuthenticated && !authIsLoading) {
-      console.log("LoginPage: Usuario ya autenticado, redirigiendo a:", from);
+    if (!authIsLoading && isAuthenticated) {
       navigate(from, { replace: true });
     }
-  }, [isAuthenticated, authIsLoading, navigate, from]); // <--- Dependencias actualizadas
+  }, [isAuthenticated, authIsLoading, navigate, from]);
 
-  const handleSubmit = async (event: React.FormEvent) => {
+  const handleSubmit = async (event: FormEvent) => {
     event.preventDefault();
-    setError(null);
-    setIsLoading(true); // Inicia la carga local del formulario
-    setRequiresTotp(false); // Resetea la necesidad de TOTP en cada intento
-    console.log("LoginPage: Intentando login con:", { username, password, totpCode: requiresTotp ? totpCode : undefined });
+    setIsLoading(true);
     try {
-      const data = await authService.login(username, password, requiresTotp ? totpCode : undefined);
-      console.log("LoginPage: Respuesta del servicio de login (data):", data);
-  
+      const data = await authService.login(username, password);
       if (data && data.access_token) {
-        console.log("LoginPage: Access token recibido:", data.access_token);
-        await contextLogin(data.access_token, data.refresh_token); // Llama al login del AuthContext
-        console.log("LoginPage: Context login llamado. La navegación debería ocurrir por el useEffect o la lógica del AuthContext.");
-        // La navegación a 'from' después de un login exitoso es manejada por el useEffect de arriba
-        // o podría ser manejada dentro de contextLogin si esa fuera la lógica preferida.
-        // Por ahora, el useEffect se encargará de ello cuando isAuthenticated cambie.
+        await contextLogin(data.access_token, data.refresh_token);
+        toast.success("¡Bienvenido!");
+        navigate(from, { replace: true });
       } else {
-        console.error("LoginPage: La respuesta del login no contenía access_token:", data);
-        setError("Respuesta inesperada del servidor durante el login.");
+        throw new Error("Respuesta inesperada del servidor.");
       }
     } catch (err: any) {
-      console.error("LoginPage: Error capturado en el submit:", err);
-      const errorMessage = err.response?.data?.detail || 'Error al iniciar sesión.';
-      setError(errorMessage);
-      if (errorMessage.toLowerCase().includes("totp code required")) {
-        console.log("LoginPage: Se requiere código TOTP.");
-        setRequiresTotp(true);
-      }
+      const errorMessage = err.response?.data?.detail || 'Usuario o contraseña incorrectos.';
+      toast.error(errorMessage);
+      console.error("Error en el login:", err);
     } finally {
-      setIsLoading(false); // Finaliza la carga local del formulario
+      setIsLoading(false);
     }
   };
 
-  // Muestra "Cargando..." si el AuthContext está verificando el estado inicial
-  // O si ya está autenticado y no hay error local ni carga local (esperando la redirección del useEffect)
-  if (authIsLoading || (isAuthenticated && !error && !isLoading)) {
-    return <div className="min-h-screen flex items-center justify-center bg-gray-100"><p>Cargando...</p></div>;
+  if (authIsLoading || isAuthenticated) {
+    return <div className="min-h-screen bg-gray-50 flex items-center justify-center"><p>Cargando...</p></div>;
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-8 bg-white p-10 rounded-xl shadow-lg">
-        <div>
+    <div className="min-h-screen bg-gray-50 flex flex-col justify-between"> {/* Cambiado a justify-between */}
+      <div className="flex flex-col justify-center py-12 sm:px-6 lg:px-8">
+        <div className="sm:mx-auto sm:w-full sm:max-w-md">
           <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-            Iniciar Sesión
+            App de Compensaciones
           </h2>
+          <p className="mt-2 text-center text-sm text-gray-600">
+            Inicia sesión en tu cuenta
+          </p>
         </div>
-        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-          {error && <p className="text-sm text-red-600 bg-red-100 p-3 rounded-md">{error}</p>}
-          <div className="rounded-md shadow-sm">
-            <div>
-              <label htmlFor="username-address" className="sr-only">Usuario</label>
-              <input id="username-address" name="username" type="text" autoComplete="username" required className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-marrs-green focus:border-marrs-green sm:text-sm" placeholder="Nombre de usuario" value={username} onChange={(e) => setUsername(e.target.value)} />
-            </div>
-            <div className="-mt-px">
-              <label htmlFor="password" className="sr-only">Contraseña</label>
-              <input id="password" name="password" type="password" autoComplete="current-password" required className={`appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 ${requiresTotp ? '' : 'rounded-b-md'} focus:outline-none focus:ring-marrs-green focus:border-marrs-green sm:text-sm`} placeholder="Contraseña" value={password} onChange={(e) => setPassword(e.target.value)} />
-            </div>
-            {requiresTotp && (
-              <div className="-mt-px">
-                <label htmlFor="totp-code" className="sr-only">Código 2FA</label>
-                <input id="totp-code" name="totpCode" type="text" autoComplete="one-time-code" required className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-marrs-green focus:border-marrs-green sm:text-sm" placeholder="Código de autenticación (6 dígitos)" value={totpCode} onChange={(e) => setTotpCode(e.target.value)} maxLength={6} />
+
+        <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
+          <div className="bg-white py-8 px-4 shadow-md sm:rounded-xl sm:px-10 border border-gray-200">
+            <form className="space-y-6" onSubmit={handleSubmit}>
+              <div>
+                <label htmlFor="username" className="block text-sm font-medium text-gray-700">
+                  Nombre de Usuario
+                </label>
+                <div className="mt-1">
+                  <input
+                    id="username"
+                    name="username"
+                    type="text"
+                    autoComplete="username"
+                    required
+                    value={username}
+                    onChange={(e) => setUsername(e.target.value)}
+                    className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-marrs-green focus:border-marrs-green sm:text-sm"
+                  />
+                </div>
               </div>
-            )}
+
+              <div>
+                <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+                  Contraseña
+                </label>
+                <div className="mt-1">
+                  <input
+                    id="password"
+                    name="password"
+                    type="password"
+                    autoComplete="current-password"
+                    required
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-marrs-green focus:border-marrs-green sm:text-sm"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <button
+                  type="submit"
+                  disabled={isLoading}
+                  className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-marrs-green hover:bg-opacity-80 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-marrs-green disabled:opacity-50"
+                >
+                  {isLoading ? 'Ingresando...' : 'Ingresar'}
+                </button>
+              </div>
+            </form>
+            <div className="mt-6">
+              <div className="relative">
+                <div className="absolute inset-0 flex items-center">
+                  <div className="w-full border-t border-gray-300" />
+                </div>
+                <div className="relative flex justify-center text-sm">
+                  <span className="px-2 bg-white text-gray-500">¿No tienes cuenta?</span>
+                </div>
+              </div>
+
+              <div className="mt-6">
+                <Link
+                  to="/register"
+                  className="w-full flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-marrs-green"
+                >
+                  Regístrate aquí
+                </Link>
+              </div>
+            </div>
           </div>
-          <div>
-            <button type="submit" disabled={isLoading} className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-marrs-green hover:bg-opacity-80 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-marrs-green disabled:opacity-50">
-              {isLoading ? 'Ingresando...' : 'Ingresar'}
-            </button>
-          </div>
-        </form>
-        <p className="mt-2 text-center text-sm text-gray-600">
-          ¿No tienes cuenta?{' '}
-          <Link to="/register" className="font-medium text-marrs-green hover:text-opacity-80">
-            Regístrate aquí
-          </Link>
-        </p>
+        </div>
       </div>
+
+      {/* Pie de página agregado */}
+      <footer className="py-4 text-center text-sm text-gray-500">
+        Copyright © 2025 Gesem. Todos los derechos reservados.
+      </footer>
     </div>
   );
 };
+
 export default LoginPage;

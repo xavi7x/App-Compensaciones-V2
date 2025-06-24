@@ -1,12 +1,41 @@
-<!doctype html>
-<html lang="en">
+<!DOCTYPE html>
+<html lang="es" class="h-full bg-gray-100">
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Vite + React + TS</title>
+
+    <!-- Carga de la fuente Inter desde Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <!-- Carga de Tailwind CSS desde CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Configuración opcional de Tailwind para extender la paleta de colores -->
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              'marrs-green': '#008080',
+              'teal': { // Añadir la paleta de teal para los hovers del sidebar
+                700: '#047857' 
+              }
+            },
+            fontFamily: {
+              // Asegurar que la fuente principal sea Inter
+              sans: ['Inter', 'sans-serif'],
+            },
+          }
+        }
+      }
+    </script>
+
+    <title>App de Compensaciones</title>
   </head>
-  <body>
+  <body class="h-full">
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>

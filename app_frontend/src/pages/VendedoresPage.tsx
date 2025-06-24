@@ -204,10 +204,10 @@ const VendedoresPage: React.FC = () => {
 
       {!isLoading && totalVendedores > 0 && totalPages > 1 && (
         <div className="mt-6 flex justify-center items-center space-x-2">
-            <button onClick={handlePreviousPage} disabled={currentPage === 1}>Anterior</button>
-            <span>Página {currentPage} de {totalPages}</span>
-            <button onClick={handleNextPage} disabled={currentPage >= totalPages}>Siguiente</button>
-        </div>
+        <button onClick={handlePreviousPage} disabled={currentPage === 1} className="px-4 py-2 text-sm text-gray-700 bg-white border rounded-md hover:bg-gray-50 disabled:opacity-50">Anterior</button>
+        <span>Página {currentPage} de {totalPages}</span>
+        <button onClick={handleNextPage} disabled={currentPage >= totalPages} className="px-4 py-2 text-sm text-gray-700 bg-white border rounded-md hover:bg-gray-50 disabled:opacity-50">Siguiente</button>
+    </div>
       )}
 
       {isVendedorFormModalOpen && (
