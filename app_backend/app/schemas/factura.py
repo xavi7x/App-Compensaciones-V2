@@ -3,38 +3,44 @@ from pydantic import BaseModel
 from typing import Optional, List
 from datetime import date, datetime
 
-# --- Schema Base para Factura ---
-# Define los campos que se reciben del frontend.
+# Importamos los schemas simplificados que ya creamos
+from .vendedor import VendedorSimple
+from .cliente import ClienteSimple
+
+# Schema Base para la entrada de datos de la factura
 class FacturaBase(BaseModel):
     numero_orden: str
     numero_caso: Optional[str] = None
     honorarios_generados: float
     gastos_generados: float
-    fecha_venta: date # El frontend envía un string, Pydantic lo convierte a fecha.
+    fecha_venta: date
     vendedor_id: int
     cliente_id: int
 
-# --- Schema para la creación de una Factura ---
 class FacturaCreate(FacturaBase):
     pass
 
-# --- Schema para la actualización de una Factura ---
 class FacturaUpdate(BaseModel):
-    numero_orden: Optional[str] = None
-    monto: Optional[float] = None
-    fecha_venta: Optional[date] = None
+    # Campos que se podrían actualizar en el futuro
+    pass
 
-# --- Schema para las respuestas de la API ---
-# Define la estructura de una factura cuando se devuelve desde la API.
+# --- SCHEMA DE RESPUESTA CORREGIDO ---
+# Esta es la estructura que la API devolverá.
 class Factura(FacturaBase):
     id: int
-    created_at: datetime # Este campo es generado por la BD y es un datetime.
+    created_at: datetime
     updated_at: Optional[datetime] = None
+
+    # --- CORRECCIÓN CRÍTICA ---
+    # Incluimos los objetos completos de vendedor y cliente.
+    # El backend se encargará de rellenar estos datos.
+    vendedor: Optional[VendedorSimple] = None
+    cliente: Optional[ClienteSimple] = None
 
     class Config:
         from_attributes = True
 
-# --- Schema para la respuesta paginada de facturas ---
+# Schema para la respuesta paginada que usa la tabla
 class FacturasResponse(BaseModel):
-    items: List[Factura]
+    items: List[Factura] # La lista ahora contendrá objetos de tipo Factura (con los detalles)
     total_count: int
