@@ -67,7 +67,9 @@ def create_vendedor_endpoint(
 def read_vendedores_endpoint(
     db: Session = Depends(deps.get_db),
     skip: int = Query(0, ge=0),
-    limit: int = Query(10, ge=1, le=100),
+    # --- CORRECCIÓN AQUÍ ---
+    # Aumentar el límite para permitir que el frontend cargue todos los vendedores para un dropdown.
+    limit: int = Query(100, ge=1, le=2000), # Límite aumentado a 2000
     search: Optional[str] = Query(None),
     current_user: UserModel = Depends(deps.get_current_user)
 ) -> Any:
