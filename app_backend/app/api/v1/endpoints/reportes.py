@@ -21,12 +21,12 @@ def get_reporte_facturacion_endpoint(
     vendedor_rut: Optional[str] = Query(None),
     skip: int = Query(0, ge=0),
     limit: int = Query(100, ge=1, le=1000),
-    current_user: UserModel = Depends(deps.get_current_user) # Proteger endpoint
+    current_user: UserModel = Depends(deps.get_current_user)
 ) -> Any:
     """
-    Obtener un reporte de facturación con filtros avanzados.
+    Obtener un reporte de facturación con filtros y sumatorias.
     """
-    items, total_count = crud.crud_reporte.get_reporte_facturacion(
+    items, total_count, sumatoria_total, sumatorias_vendedor = crud.get_reporte_facturacion(
         db=db, 
         start_date=start_date, 
         end_date=end_date,
@@ -37,4 +37,9 @@ def get_reporte_facturacion_endpoint(
         skip=skip,
         limit=limit
     )
-    return {"items": items, "total_count": total_count}
+    return {
+        "items": items, 
+        "total_count": total_count,
+        "sumatoria_total_honorarios": sumatoria_total,
+        "sumatorias_por_vendedor": sumatorias_vendedor
+    }

@@ -22,3 +22,17 @@ export interface ReporteFacturaItem {
       items: ReporteFacturaItem[];
       total_count: number;
   }
+
+  // --- NUEVAS INTERFACES ---
+export interface SumatoriaPorVendedor {
+    vendedor_id: number;
+    vendedor_nombre: string;
+    total_honorarios: number;
+}
+
+export interface ReporteResponse {
+    items: ReporteFacturaItem[];
+    total_count: number;
+    sumatoria_total_honorarios: number;
+    sumatorias_por_vendedor: SumatoriaPorVendedor[];
+}

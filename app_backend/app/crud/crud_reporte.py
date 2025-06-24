@@ -1,8 +1,9 @@
 # app/crud/crud_reporte.py
 from sqlalchemy.orm import Session
-from sqlalchemy import func, or_
-from typing import List, Optional, Tuple, Any
+from sqlalchemy import func, or_, cast, Float
+from typing import List, Optional, Tuple, Any, Dict
 from datetime import date
+from collections import defaultdict
 
 from app.models.factura import Factura
 from app.models.vendedor import Vendedor
@@ -19,7 +20,7 @@ def get_reporte_facturacion(
     vendedor_rut: Optional[str] = None,
     skip: int = 0,
     limit: int = 100
-) -> Tuple[List[Any], int]:
+) -> Tuple[List[Any], int, float, List[Dict[str, Any]]]: # <-- Tipo de retorno actualizado
 
     # Iniciar la consulta uniendo las tablas necesarias
     query = db.query(
@@ -38,31 +39,39 @@ def get_reporte_facturacion(
     ).join(Vendedor, Factura.vendedor_id == Vendedor.id).join(Cliente, Factura.cliente_id == Cliente.id)
 
     # Aplicar filtros dinámicamente
-
-    # Filtro de período (siempre requerido)
     query = query.filter(Factura.fecha_emision.between(start_date, end_date))
-
     if numero_caso:
         query = query.filter(Factura.numero_caso.ilike(f"%{numero_caso}%"))
-
     if vendedor_id:
         query = query.filter(Factura.vendedor_id == vendedor_id)
-
     if cliente_id:
         query = query.filter(Factura.cliente_id == cliente_id)
-
     if vendedor_rut:
-        # Limpiar RUT si viene con puntos o guion
         rut_limpio = vendedor_rut.replace(".", "").replace("-", "")
-        query = query.filter(
-            func.replace(func.replace(Vendedor.rut, '.', ''), '-', '').ilike(f"%{rut_limpio}%")
-        )
+        query = query.filter(func.replace(func.replace(Vendedor.rut, '.', ''), '-', '').ilike(f"%{rut_limpio}%"))
 
-    # Contar el total de resultados que coinciden con los filtros (para paginación)
-    count_query = query.statement.with_only_columns(func.count()).order_by(None)
-    total_count = db.execute(count_query).scalar_one()
+    # --- LÓGICA DE SUMATORIAS ---
+    # Ejecutar la consulta filtrada una vez para obtener todos los datos para los cálculos
+    all_filtered_results = query.all()
 
-    # Aplicar ordenamiento y paginación para la consulta final
-    items = query.order_by(Factura.fecha_emision.desc()).offset(skip).limit(limit).all()
+    # 1. Calcular la sumatoria total de honorarios
+    sumatoria_total_honorarios = sum(item.honorarios_generados for item in all_filtered_results)
 
-    return items, total_count
+    # 2. Calcular las sumatorias por vendedor
+    sumatorias_vendedor_dict = defaultdict(lambda: {"vendedor_nombre": "", "total_honorarios": 0.0})
+    for item in all_filtered_results:
+        sumatorias_vendedor_dict[item.vendedor_id]["vendedor_nombre"] = item.vendedor_nombre
+        sumatorias_vendedor_dict[item.vendedor_id]["total_honorarios"] += item.honorarios_generados
+
+    sumatorias_por_vendedor = [
+        {"vendedor_id": vid, **data} for vid, data in sumatorias_vendedor_dict.items()
+    ]
+    sumatorias_por_vendedor.sort(key=lambda x: x["total_honorarios"], reverse=True)
+
+    # --- FIN LÓGICA DE SUMATORIAS ---
+
+    # 3. Aplicar paginación a los resultados ya obtenidos
+    total_count = len(all_filtered_results)
+    paginated_items = all_filtered_results[skip : skip + limit]
+
+    return paginated_items, total_count, sumatoria_total_honorarios, sumatorias_por_vendedor

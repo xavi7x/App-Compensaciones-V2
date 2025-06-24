@@ -15,3 +15,4 @@ from .crud_vendedor import (
 
 from . import crud_factura
 from .crud_factura import get_factura, get_facturas, create_factura # <--- 23 jun 25
+from .crud_reporte import get_reporte_facturacion # <--- 23 jun 25
