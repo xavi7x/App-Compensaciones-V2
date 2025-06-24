@@ -41,6 +41,12 @@ const MainLayout: React.FC = () => {
               Calcular Bonos
             </NavLink>
           </div>
+          {/* --- ENLACE AÑADIDO --- */}
+          <div>
+            <NavLink to="/reportes" className={({ isActive }) => `${navLinkStyle} ${isActive ? activeNavLinkStyle : ''}`}>
+              Reportes
+            </NavLink>
+          </div>
         </div>
       )}
     </nav>
@@ -55,7 +61,6 @@ const MainLayout: React.FC = () => {
       <aside className={`bg-marrs-green text-white w-64 space-y-6 py-7 px-2 absolute inset-y-0 left-0 transform ${isMenuOpen ? "translate-x-0" : "-translate-x-full"} md:relative md:translate-x-0 transition-transform duration-300 ease-in-out flex flex-col z-30`}>
         {/* Logo */}
         <Link to="/" className="text-white text-2xl font-extrabold px-4 flex items-center space-x-2">
-          {/* Aquí podrías poner un SVG o un ícono si lo tienes */}
           <span>App de Compensaciones</span>
         </Link>
         

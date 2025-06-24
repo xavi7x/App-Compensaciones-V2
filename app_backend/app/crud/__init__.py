@@ -8,9 +8,10 @@ from .crud_cliente import (
     update_cliente, remove_cliente
 )
 
-from .crud_vendedor import ( # <--- AÑADE ESTAS LÍNEAS
+from .crud_vendedor import ( 
     get_vendedor, get_vendedor_by_rut, get_vendedores, create_vendedor, update_vendedor, remove_vendedor,
     add_cliente_a_vendedor, update_porcentaje_cliente_vendedor, remove_cliente_de_vendedor, get_asignacion
 )
 
 from . import crud_factura
+from .crud_factura import get_factura, get_facturas, create_factura # <--- 23 jun 25

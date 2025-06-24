@@ -1,19 +1,15 @@
 # app/schemas/factura.py
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from typing import Optional, List
-from datetime import date, datetime
+from datetime import datetime
+from .vendedor import Vendedor as VendedorSchema # Para anidar datos del vendedor
+from .cliente import Cliente as ClienteSchema # Para anidar datos del cliente
 
-# Importamos los schemas simplificados que ya creamos
-from .vendedor import VendedorSimple
-from .cliente import ClienteSimple
-
-# Schema Base para la entrada de datos de la factura
 class FacturaBase(BaseModel):
-    numero_orden: str
+    numero_orden: Optional[str] = None
     numero_caso: Optional[str] = None
-    honorarios_generados: float
-    gastos_generados: float
-    fecha_venta: date
+    honorarios_generados: float = Field(..., ge=0)
+    gastos_generados: float = Field(..., ge=0)
     vendedor_id: int
     cliente_id: int
 
@@ -21,26 +17,28 @@ class FacturaCreate(FacturaBase):
     pass
 
 class FacturaUpdate(BaseModel):
-    # Campos que se podrían actualizar en el futuro
-    pass
+    numero_orden: Optional[str] = None
+    numero_caso: Optional[str] = None
+    honorarios_generados: Optional[float] = Field(None, ge=0)
+    gastos_generados: Optional[float] = Field(None, ge=0)
+    vendedor_id: Optional[int] = None
+    cliente_id: Optional[int] = None
 
-# --- SCHEMA DE RESPUESTA CORREGIDO ---
-# Esta es la estructura que la API devolverá.
-class Factura(FacturaBase):
+# --- CORRECCIÓN IMPORTANTE AQUÍ ---
+# Este schema es el que se usa para las respuestas API y debe coincidir con el modelo
+class Factura(FacturaBase): # Ya no hereda de InDBBase, se define explícitamente
     id: int
+    # El campo se llama 'fecha_emision' en el modelo, no 'fecha_venta'
+    fecha_emision: datetime 
+    # El campo se llama 'created_at' en el modelo
     created_at: datetime
-    updated_at: Optional[datetime] = None
 
-    # --- CORRECCIÓN CRÍTICA ---
-    # Incluimos los objetos completos de vendedor y cliente.
-    # El backend se encargará de rellenar estos datos.
-    vendedor: Optional[VendedorSimple] = None
-    cliente: Optional[ClienteSimple] = None
+    vendedor: Optional[VendedorSchema] = None # Anidar objeto Vendedor
+    cliente: Optional[ClienteSchema] = None # Anidar objeto Cliente
 
     class Config:
         from_attributes = True
 
-# Schema para la respuesta paginada que usa la tabla
 class FacturasResponse(BaseModel):
-    items: List[Factura] # La lista ahora contendrá objetos de tipo Factura (con los detalles)
+    items: List[Factura]
     total_count: int

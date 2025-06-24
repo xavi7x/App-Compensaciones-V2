@@ -18,6 +18,8 @@ def create_factura_endpoint(
     factura_in: schemas.factura.FacturaCreate,
     current_user: UserModel = Depends(deps.get_current_user)
 ):
+    return crud.crud_factura.create_factura(db=db, factura_in=factura_in)
+    
     vendedor = crud.crud_vendedor.get_vendedor(db, vendedor_id=factura_in.vendedor_id)
     if not vendedor:
         raise HTTPException(status_code=404, detail=f"Vendedor con ID {factura_in.vendedor_id} no encontrado.")

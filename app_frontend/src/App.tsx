@@ -11,7 +11,8 @@ import DashboardPage from './pages/DashboardPage';
 import ClientesPage from './pages/ClientesPage';
 import VendedoresPage from './pages/VendedoresPage'; 
 import FacturacionPage from './pages/FacturacionPage';
-import BonusCalculationPage from './pages/BonusCalculationPage'; // <-- Importar la nueva página
+import BonusCalculationPage from './pages/BonusCalculationPage';
+import ReportsPage from './pages/ReportsPage'; // <-- 1. Importar la nueva página de reportes
 import 'react-toastify/dist/ReactToastify.css'; 
 import { ToastContainer } from "react-toastify";
 
@@ -51,7 +52,8 @@ function App() {
             <Route path="/clientes" element={<ClientesPage />} />
             <Route path="/vendedores" element={<VendedoresPage />} />
             <Route path="/facturacion" element={<FacturacionPage />} />
-            <Route path="/calculo-bonos" element={<BonusCalculationPage />} /> {/* <-- AÑADIR LA NUEVA RUTA */}
+            <Route path="/calculo-bonos" element={<BonusCalculationPage />} />
+            <Route path="/reportes" element={<ReportsPage />} /> {/* <-- 2. AÑADIR LA NUEVA RUTA PROTEGIDA */}
           </Route>
         </Route>
       </Routes>
