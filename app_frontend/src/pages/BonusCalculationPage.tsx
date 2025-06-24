@@ -9,32 +9,38 @@ import { toast } from 'react-toastify';
 
 const BonusCalculationPage: React.FC = () => {
   const [vendedores, setVendedores] = useState<Vendedor[]>([]);
-  const [selectedVendedor, setSelectedVendedor] = useState<string>('todos'); // 'todos' o el ID del vendedor
+  const [vendedoresError, setVendedoresError] = useState<string | null>(null); // Estado de error para el dropdown
+  const [selectedVendedor, setSelectedVendedor] = useState<string>('todos');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   const [results, setResults] = useState<BonoCalculationResponse | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [calculationError, setCalculationError] = useState<string | null>(null);
 
   // Cargar la lista de vendedores para el dropdown
   useEffect(() => {
     const loadVendedores = async () => {
       try {
-        const response = await vendedorService.getAllVendedores(0, 1000); // Cargar todos
+        // Pedir hasta 1000 vendedores, que debería ser suficiente para un dropdown
+        const response = await vendedorService.getAllVendedores(0, 1000); 
         setVendedores(response.items);
-      } catch (err) {
-        toast.error("No se pudo cargar la lista de vendedores.");
+        setVendedoresError(null); // Limpiar error si la carga es exitosa
+      } catch (err: any) {
+        const errorMsg = err.response?.data?.detail || "No se pudo cargar la lista de vendedores.";
+        console.error("Error cargando vendedores:", err);
+        setVendedoresError(errorMsg); // Guardar el error específico para mostrarlo
+        toast.error(errorMsg);
       }
     };
     loadVendedores();
-  }, []);
+  }, []); // Se ejecuta solo una vez al montar
 
   const handleCalculate = async () => {
     if (!startDate || !endDate) {
       toast.warn("Por favor, seleccione un rango de fechas.");
       return;
     }
-    setError(null);
+    setCalculationError(null);
     setResults(null);
     setIsLoading(true);
     try {
@@ -48,7 +54,7 @@ const BonusCalculationPage: React.FC = () => {
       toast.success(`Cálculo completado. Se encontraron ${response.resultados.length} resultados.`);
     } catch (err: any) {
       const errorMsg = err.response?.data?.detail || "Error al calcular los bonos.";
-      setError(errorMsg);
+      setCalculationError(errorMsg);
       toast.error(errorMsg);
     } finally {
       setIsLoading(false);
@@ -70,14 +76,16 @@ const BonusCalculationPage: React.FC = () => {
               value={selectedVendedor}
               onChange={(e) => setSelectedVendedor(e.target.value)}
               className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-marrs-green focus:border-marrs-green sm:text-sm rounded-md"
+              disabled={!!vendedoresError} // Deshabilitar si hay error al cargar
             >
               <option value="todos">Todos los Vendedores</option>
               {vendedores.map(v => (
                 <option key={v.id} value={v.id}>{v.nombre_completo}</option>
               ))}
             </select>
+            {vendedoresError && <p className="text-xs text-red-500 mt-1">{vendedoresError}</p>}
           </div>
-          {/* Selector de Fecha de Inicio */}
+          {/* Selectores de Fecha */}
           <div>
             <label htmlFor="start-date" className="block text-sm font-medium text-gray-700">Fecha de Inicio</label>
             <input 
@@ -88,7 +96,6 @@ const BonusCalculationPage: React.FC = () => {
               className="mt-1 block w-full pl-3 pr-2 py-2 text-base border-gray-300 focus:outline-none focus:ring-marrs-green focus:border-marrs-green sm:text-sm rounded-md"
             />
           </div>
-          {/* Selector de Fecha de Fin */}
           <div>
             <label htmlFor="end-date" className="block text-sm font-medium text-gray-700">Fecha de Fin</label>
             <input 
@@ -103,7 +110,7 @@ const BonusCalculationPage: React.FC = () => {
         <div className="mt-6 text-right">
           <button
             onClick={handleCalculate}
-            disabled={isLoading}
+            disabled={isLoading || !!vendedoresError} // Deshabilitar si hay error en vendedores
             className="inline-flex justify-center py-2 px-6 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-marrs-green hover:bg-opacity-80 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-marrs-green disabled:opacity-50"
           >
             {isLoading ? 'Calculando...' : 'Calcular Bonos'}
@@ -111,7 +118,7 @@ const BonusCalculationPage: React.FC = () => {
         </div>
       </div>
 
-      {error && <div className="mt-6 p-4 text-red-700 bg-red-100 rounded-md">{error}</div>}
+      {calculationError && <div className="mt-6 p-4 text-red-700 bg-red-100 rounded-md">{calculationError}</div>}
 
       {results && <BonusResultsTable resultados={results.resultados} />}
     </div>
