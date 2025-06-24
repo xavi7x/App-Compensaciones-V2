@@ -10,13 +10,16 @@ import HomePage from './pages/HomePage';
 import DashboardPage from './pages/DashboardPage';
 import ClientesPage from './pages/ClientesPage';
 import VendedoresPage from './pages/VendedoresPage'; 
-import FacturacionPage from './pages/FacturacionPage'; // <-- Importar la nueva página
+import FacturacionPage from './pages/FacturacionPage';
+import BonusCalculationPage from './pages/BonusCalculationPage'; // <-- Importar la nueva página
 import 'react-toastify/dist/ReactToastify.css'; 
 import { ToastContainer } from "react-toastify";
 
 // Configura Axios globalmente (opcional)
 axios.interceptors.request.use((config) => {
-  const token = localStorage.getItem("authToken");
+  // El interceptor en apiClient.ts es más robusto, pero si se usa este, debe ser consistente.
+  // Se recomienda usar el de apiClient.ts y quitar este para evitar duplicidad.
+  const token = localStorage.getItem("accessToken"); // Usar "accessToken" consistentemente
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
@@ -47,7 +50,8 @@ function App() {
             <Route path="/dashboard" element={<DashboardPage />} />
             <Route path="/clientes" element={<ClientesPage />} />
             <Route path="/vendedores" element={<VendedoresPage />} />
-            <Route path="/facturacion" element={<FacturacionPage />} /> {/* <-- AÑADIR LA NUEVA RUTA */}
+            <Route path="/facturacion" element={<FacturacionPage />} />
+            <Route path="/calculo-bonos" element={<BonusCalculationPage />} /> {/* <-- AÑADIR LA NUEVA RUTA */}
           </Route>
         </Route>
       </Routes>

@@ -1,7 +1,7 @@
 // src/layouts/MainLayout.tsx
 import React, { useState } from 'react';
 import { Link, Outlet, NavLink } from 'react-router-dom';
-import { useAuth } from '../contexts/AuthContext'; // Asumiendo que tienes un AuthContext
+import { useAuth } from '../contexts/AuthContext'; 
 
 const MainLayout: React.FC = () => {
   const { user, logout } = useAuth(); // Obtener estado de autenticación y función de logout
@@ -34,6 +34,11 @@ const MainLayout: React.FC = () => {
           <div>
             <NavLink to="/facturacion" className={({ isActive }) => `${navLinkStyle} ${isActive ? activeNavLinkStyle : ''}`}>
               Facturación
+            </NavLink>
+          </div>
+          <div>
+            <NavLink to="/calculo-bonos" className={({ isActive }) => `${navLinkStyle} ${isActive ? activeNavLinkStyle : ''}`}>
+              Calcular Bonos
             </NavLink>
           </div>
         </div>

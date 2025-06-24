@@ -14,6 +14,7 @@ from .vendedor import (
 )
 
 from . import factura
+from .bono import BonoCalculationRequest, BonoVendedorResult, BonoCalculationResponse # <--- 23 jun 25
 
 class Token(BaseModel):
     access_token: str
