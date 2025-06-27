@@ -18,8 +18,6 @@ import { ToastContainer } from "react-toastify";
 
 // Configura Axios globalmente (opcional)
 axios.interceptors.request.use((config) => {
-  // El interceptor en apiClient.ts es más robusto, pero si se usa este, debe ser consistente.
-  // Se recomienda usar el de apiClient.ts y quitar este para evitar duplicidad.
   const token = localStorage.getItem("accessToken"); // Usar "accessToken" consistentemente
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
