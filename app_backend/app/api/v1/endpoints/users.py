@@ -84,7 +84,10 @@ def read_users(
     skip: int = 0,
     limit: int = 100,
 ) -> Any:
-    users = crud.crud_user.get_users(db, skip=skip, limit=limit)
+    """
+    Retrieve active and approved users (Admin only).
+    """
+    users = crud.get_active_users(db, skip=skip, limit=limit) # <--- VERIFICA ESTA LÍNEA
     return users
 
 @router.get("/pending-approval", response_model=List[schemas.User], dependencies=[Depends(deps.get_current_admin_user)])
@@ -94,6 +97,19 @@ def read_pending_approval_users(
     limit: int = 100,
 ) -> Any:
     users = crud.crud_user.get_pending_approval_users(db, skip=skip, limit=limit)
+    return users
+
+    # --- NUEVO ENDPOINT ---
+@router.get("/archived", response_model=List[schemas.User], dependencies=[Depends(deps.get_current_admin_user)])
+def read_archived_users(
+    db: Session = Depends(deps.get_db),
+    skip: int = 0,
+    limit: int = 100,
+) -> Any:
+    """
+    Retrieve archived (inactive or rejected) users.
+    """
+    users = crud.get_archived_users(db, skip=skip, limit=limit)
     return users
 
 @router.put("/{user_id}", response_model=schemas.User, dependencies=[Depends(deps.get_current_admin_user)])

@@ -1,34 +1,39 @@
 // src/services/userService.ts
 import apiClient from './apiClient';
-import { User, UserUpdate } from '../types/user'; // Asegúrate de importar UserUpdate
+import { User, UserUpdate } from '../types/user'; 
 
-// Obtener la lista de usuarios pendientes de aprobación
 const getPendingApprovalUsers = async (): Promise<User[]> => {
   const response = await apiClient.get<User[]>('/users/pending-approval');
   return response.data;
 };
 
-// --- NUEVA FUNCIÓN ---
-// Obtener la lista de TODOS los usuarios (para admin)
-const getAllUsers = async (): Promise<User[]> => {
-  const response = await apiClient.get<User[]>('/users/');
+// Obtiene solo usuarios activos y aprobados para la gestión principal
+const getAllActiveUsers = async (): Promise<User[]> => {
+  const response = await apiClient.get<User[]>('/users/'); // Este endpoint debería devolver solo usuarios activos/aprobados
   return response.data;
 };
 
-// Aprobar la cuenta de un usuario por su ID
+// --- NUEVA FUNCIÓN ---
+// Obtiene usuarios rechazados o inactivos
+const getArchivedUsers = async (): Promise<User[]> => {
+  // Asumimos que tendrás un endpoint para esto. Si no, se puede filtrar desde /users/ si devuelve todo.
+  // Por ahora, lo implementaremos asumiendo que el endpoint /users/archived existe.
+  // Si no, necesitarías modificar el backend o filtrar en el frontend desde la lista completa.
+  const response = await apiClient.get<User[]>('/users/archived'); // Endpoint hipotético
+  return response.data;
+};
+
+
 const approveUser = async (userId: number): Promise<User> => {
   const response = await apiClient.post<User>(`/users/${userId}/approve`);
   return response.data;
 };
 
-// Rechazar la cuenta de un usuario por su ID
 const rejectUser = async (userId: number): Promise<User> => {
   const response = await apiClient.post<User>(`/users/${userId}/reject`);
   return response.data;
 };
 
-// --- NUEVA FUNCIÓN ---
-// Actualizar un usuario (ej. para cambiar su rol)
 const updateUser = async (userId: number, data: UserUpdate): Promise<User> => {
   const response = await apiClient.put<User>(`/users/${userId}`, data);
   return response.data;
@@ -36,7 +41,8 @@ const updateUser = async (userId: number, data: UserUpdate): Promise<User> => {
 
 const userService = {
   getPendingApprovalUsers,
-  getAllUsers, 
+  getAllActiveUsers, // Renombrado para mayor claridad
+  getArchivedUsers, // <--- AÑADIR
   approveUser,
   rejectUser,
   updateUser, 
