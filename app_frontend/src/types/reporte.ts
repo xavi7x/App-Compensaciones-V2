@@ -16,20 +16,18 @@ export interface ReporteFacturaItem {
     cliente_id: number;
     cliente_razon_social: string;
     cliente_rut: string;
+
+    // --- CAMPO AÑADIDO PARA EL BONO ---
+    bono_calculado?: number; 
   }
   
-  export interface ReporteResponse {
-      items: ReporteFacturaItem[];
-      total_count: number;
-  }
-
-  // --- NUEVAS INTERFACES ---
 export interface SumatoriaPorVendedor {
     vendedor_id: number;
     vendedor_nombre: string;
     total_honorarios: number;
 }
 
+// --- INTERFAZ CORREGIDA Y UNIFICADA ---
 export interface ReporteResponse {
     items: ReporteFacturaItem[];
     total_count: number;
