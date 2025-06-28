@@ -20,6 +20,7 @@ const BonusResultsTable: React.FC<BonusResultsTableProps> = ({ resultados }) => 
             <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Total Honorarios</th>
             <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Total Gastos</th>
             <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Total Neto</th>
+            <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Porcentaje Aplicado</th> {/* NUEVA COLUMNA */}
             <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Bono Calculado</th>
           </tr>
         </thead>
@@ -30,6 +31,10 @@ const BonusResultsTable: React.FC<BonusResultsTableProps> = ({ resultados }) => 
               <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-500 text-right">${res.total_honorarios.toLocaleString('es-CL')}</td>
               <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-500 text-right">${res.total_gastos.toLocaleString('es-CL')}</td>
               <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-700 text-right">${res.total_neto.toLocaleString('es-CL')}</td>
+              {/* CELDA PARA MOSTRAR EL NUEVO PORCENTAJE */}
+              <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-700 text-right">
+                {res.porcentaje_bono_aplicado !== undefined ? `${res.porcentaje_bono_aplicado.toLocaleString('es-CL')}%` : 'N/A'}
+              </td>
               <td className="px-4 py-4 whitespace-nowrap text-sm font-bold text-marrs-green text-right">${res.bono_calculado.toLocaleString('es-CL', {minimumFractionDigits: 2})}</td>
             </tr>
           ))}
