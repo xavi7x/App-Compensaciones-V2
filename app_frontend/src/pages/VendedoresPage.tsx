@@ -5,7 +5,7 @@ import { Vendedor, ClienteAsignado } from '../types/vendedor';
 import { toast } from 'react-toastify';
 import VendedorFormModal from '../components/vendedores/VendedorFormModal';
 import VendedorUploadCSVModal from '../components/vendedores/VendedorUploadCSVModal';
-import useDebounce from '../hooks/useDebounce'; // <-- 1. IMPORTAR EL HOOK
+import useDebounce from '../hooks/useDebounce';
 
 const VendedoresPage: React.FC = () => {
   const [vendedores, setVendedores] = useState<Vendedor[]>([]);
@@ -16,9 +16,8 @@ const VendedoresPage: React.FC = () => {
   const [itemsPerPage, setItemsPerPage] = useState(10);
   const [totalVendedores, setTotalVendedores] = useState(0);
 
-  // Búsqueda
   const [searchTerm, setSearchTerm] = useState('');
-  const debouncedSearchTerm = useDebounce(searchTerm, 300); // <-- 2. USAR EL HOOK 
+  const debouncedSearchTerm = useDebounce(searchTerm, 300);
 
   const [isVendedorFormModalOpen, setIsVendedorFormModalOpen] = useState(false);
   const [editingVendedor, setEditingVendedor] = useState<Vendedor | null>(null);
@@ -30,14 +29,11 @@ const VendedoresPage: React.FC = () => {
     setIsLoading(true);
     setError(null);
     try {
-      // CALCULAR EL 'SKIP' U 'OFFSET' PARA EL BACKEND.
-      // Si la página es 1, skip es 0. Si la página es 2, skip es 10 (si itemsPerPage es 10).
       const skip = (currentPage - 1) * itemsPerPage;
-
       const response = await vendedorService.getAllVendedores(
-        skip, // <-- CORRECCIÓN: Enviar el 'skip' calculado
+        skip,
         itemsPerPage,
-        debouncedSearchTerm // <-- 3. USAR EL TÉRMINO DE BÚSQUEDA RETRASADO
+        debouncedSearchTerm
       );
       if (response && Array.isArray(response.items)) {
         setVendedores(response.items);
@@ -56,7 +52,7 @@ const VendedoresPage: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [currentPage, itemsPerPage, debouncedSearchTerm]); // <-- 4. AÑADIR 'debouncedSearchTerm' A LAS DEPENDENCIAS
+  }, [currentPage, itemsPerPage, debouncedSearchTerm]);
 
   useEffect(() => {
     fetchVendedores();
@@ -130,11 +126,8 @@ const VendedoresPage: React.FC = () => {
         </div>
       </div>
 
-      {/* Bloque de depuración para la paginación y búsqueda */}
-      <div className="my-2 p-2 bg-yellow-100 text-yellow-800 text-xs rounded-md">
-        <p>Página actual: {currentPage}, Total Páginas: {totalPages}, Total Vendedores: {totalVendedores}, Vendedores por página: {itemsPerPage}, Término de búsqueda: "{debouncedSearchTerm}"</p>
-      </div>
-
+      {/* MODIFICACIÓN: Se elimina el div amarillo de estadísticas */}
+      
       {error && !isLoading && <div className="mb-4 p-4 text-red-700 bg-red-100 rounded-md border border-red-300">{error}</div>}
 
       <div className="mb-4">
@@ -142,10 +135,10 @@ const VendedoresPage: React.FC = () => {
           type="text"
           placeholder="Buscar por Nombre o RUT..."
           className="w-full md:w-1/2 px-3 py-2 border border-gray-300 rounded-md shadow-sm"
-          value={searchTerm} // El input sigue usando el valor instantáneo
+          value={searchTerm}
           onChange={(e) => { 
             setSearchTerm(e.target.value); 
-            setCurrentPage(1); // Resetear la página a 1 en cada cambio de búsqueda
+            setCurrentPage(1);
           }}
         />
       </div>
@@ -201,14 +194,44 @@ const VendedoresPage: React.FC = () => {
           </div>
         )}
       </div>
+      
+      {/* --- INICIO DE LA SECCIÓN MODIFICADA --- */}
+      {/* Paginación y recuento: Se muestra solo si no está cargando y hay vendedores */}
+      {!isLoading && totalVendedores > 0 && (
+        <div className="mt-6 flex flex-col sm:flex-row justify-between items-center text-sm text-gray-700">
+          
+          {/* Recuento de resultados */}
+          <div className="mb-2 sm:mb-0">
+            <p>
+              Mostrando <span className="font-semibold">{(currentPage - 1) * itemsPerPage + 1}</span> a <span className="font-semibold">{Math.min(currentPage * itemsPerPage, totalVendedores)}</span> de <span className="font-semibold">{totalVendedores}</span> resultados
+            </p>
+          </div>
 
-      {!isLoading && totalVendedores > 0 && totalPages > 1 && (
-        <div className="mt-6 flex justify-center items-center space-x-2">
-        <button onClick={handlePreviousPage} disabled={currentPage === 1} className="px-4 py-2 text-sm text-gray-700 bg-white border rounded-md hover:bg-gray-50 disabled:opacity-50">Anterior</button>
-        <span>Página {currentPage} de {totalPages}</span>
-        <button onClick={handleNextPage} disabled={currentPage >= totalPages} className="px-4 py-2 text-sm text-gray-700 bg-white border rounded-md hover:bg-gray-50 disabled:opacity-50">Siguiente</button>
-    </div>
+          {/* Controles de Paginación (solo si hay más de una página) */}
+          {totalPages > 1 && (
+            <div className="flex items-center space-x-2">
+                <button 
+                    onClick={handlePreviousPage} 
+                    disabled={currentPage === 1 || isLoading}
+                    className="px-4 py-2 font-medium bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                    Anterior
+                </button>
+                <span className="px-4 py-2 bg-white border-t border-b border-gray-300">
+                    Página {currentPage} de {totalPages}
+                </span>
+                <button 
+                    onClick={handleNextPage} 
+                    disabled={currentPage >= totalPages || isLoading}
+                    className="px-4 py-2 font-medium bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                    Siguiente
+                </button>
+            </div>
+          )}
+        </div>
       )}
+      {/* --- FIN DE LA SECCIÓN MODIFICADA --- */}
 
       {isVendedorFormModalOpen && (
         <VendedorFormModal

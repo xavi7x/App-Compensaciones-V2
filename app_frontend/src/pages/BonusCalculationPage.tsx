@@ -117,7 +117,8 @@ const BonusCalculationPage: React.FC = () => {
               id="start-date"
               value={startDate}
               onChange={(e) => setStartDate(e.target.value)}
-              className="mt-1 block w-full pl-3 pr-2 py-2 text-base border-gray-300 focus:outline-none focus:ring-marrs-green focus:border-marrs-green sm:text-sm rounded-md"
+              // MODIFICACIÓN: Se agregó la clase 'border' para hacer el borde visible
+              className="mt-1 block w-full pl-3 pr-2 py-2 text-base border border-gray-300 focus:outline-none focus:ring-marrs-green focus:border-marrs-green sm:text-sm rounded-md"
             />
           </div>
           <div>
@@ -127,7 +128,8 @@ const BonusCalculationPage: React.FC = () => {
               id="end-date"
               value={endDate}
               onChange={(e) => setEndDate(e.target.value)}
-              className="mt-1 block w-full pl-3 pr-2 py-2 text-base border-gray-300 focus:outline-none focus:ring-marrs-green focus:border-marrs-green sm:text-sm rounded-md"
+              // MODIFICACIÓN: Se agregó la clase 'border' para hacer el borde visible
+              className="mt-1 block w-full pl-3 pr-2 py-2 text-base border border-gray-300 focus:outline-none focus:ring-marrs-green focus:border-marrs-green sm:text-sm rounded-md"
             />
           </div>
         </div>

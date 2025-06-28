@@ -171,7 +171,7 @@ const ClientesPage: React.FC = () => {
       <div className="mb-4">
         <input 
           type="text"
-          placeholder="Buscar por Razón Social o RUT..."
+          placeholder="Buscar por Ramo, Razón Social o RUT..."
           className="w-full md:w-1/2 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-marrs-green focus:border-marrs-green sm:text-sm"
           value={searchTerm}
           onChange={(e) => {
@@ -180,10 +180,8 @@ const ClientesPage: React.FC = () => {
           }}
         />
       </div>
-
-      <div className="my-2 p-2 bg-yellow-100 text-yellow-800 text-xs rounded-md">
-        <p>Página actual: {currentPage}, Total Páginas: {totalPages}, Total Clientes: {totalClientes}, Clientes por página: {itemsPerPage}</p>
-      </div>
+      
+      {/* MODIFICACIÓN: Se elimina el div amarillo de estadísticas */}
 
       <div className="bg-white p-0 sm:p-2 rounded-xl shadow-lg">
         <ClienteTable 
@@ -195,31 +193,45 @@ const ClientesPage: React.FC = () => {
         {isLoading && clientes.length > 0 && <p className="text-sm text-gray-500 p-4 text-center animate-pulse">Actualizando lista...</p>}
       </div>
 
-      {/* Paginación: Mostrar solo si no está cargando Y hay más de una página */}
-      {!isLoading && totalClientes > 0 && totalPages > 1 && (
-        <div className="mt-6 flex justify-center items-center space-x-2">
-            <button 
-                onClick={handlePreviousPage} 
-                disabled={currentPage === 1 || isLoading}
-                className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50"
-            >
-                Anterior
-            </button>
-            <span className="text-sm text-gray-700">
-                Página {currentPage} de {totalPages}
-            </span>
-            <button 
-                onClick={handleNextPage} 
-                disabled={currentPage >= totalPages || isLoading}
-                className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50"
-            >
-                Siguiente
-            </button>
+      {/* --- INICIO DE LA SECCIÓN MODIFICADA --- */}
+      {/* Paginación y recuento: Se muestra solo si no está cargando y hay clientes */}
+      {!isLoading && totalClientes > 0 && (
+        <div className="mt-6 flex flex-col sm:flex-row justify-between items-center text-sm text-gray-700">
+          
+          {/* Recuento de resultados */}
+          <div className="mb-2 sm:mb-0">
+            <p>
+              Mostrando <span className="font-semibold">{(currentPage - 1) * itemsPerPage + 1}</span> a <span className="font-semibold">{Math.min(currentPage * itemsPerPage, totalClientes)}</span> de <span className="font-semibold">{totalClientes}</span> resultados
+            </p>
+          </div>
+
+          {/* Controles de Paginación (solo si hay más de una página) */}
+          {totalPages > 1 && (
+            <div className="flex items-center space-x-2">
+                <button 
+                    onClick={handlePreviousPage} 
+                    disabled={currentPage === 1 || isLoading}
+                    className="px-4 py-2 font-medium bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                    Anterior
+                </button>
+                <span className="px-4 py-2 bg-white border-t border-b border-gray-300">
+                    Página {currentPage} de {totalPages}
+                </span>
+                <button 
+                    onClick={handleNextPage} 
+                    disabled={currentPage >= totalPages || isLoading}
+                    className="px-4 py-2 font-medium bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                    Siguiente
+                </button>
+            </div>
+          )}
         </div>
       )}
+      {/* --- FIN DE LA SECCIÓN MODIFICADA --- */}
 
-      {/* --- SECCIÓN CRÍTICA PARA EL ERROR DE SINTAXIS --- */}
-      {/* Asegúrate de que aquí estés renderizando los componentes modales correctamente */}
+
       {isFormModalOpen && (
         <ClienteFormModal
           isOpen={isFormModalOpen}
@@ -235,7 +247,6 @@ const ClientesPage: React.FC = () => {
             onUploadSuccess={handleDataChange}
         />
       )}
-      {/* --- FIN DE LA SECCIÓN CRÍTICA --- */}
     </div>
   );
 };
