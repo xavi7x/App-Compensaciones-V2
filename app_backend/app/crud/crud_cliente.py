@@ -66,3 +66,9 @@ def remove_cliente(db: Session, *, cliente_id: int) -> Optional[Cliente]:
         db.delete(db_cliente)
         db.commit()
     return db_cliente # Retorna el objeto eliminado o None si no se encontró
+
+def get_clientes_simple(db: Session) -> List[Cliente]:
+    """
+    Obtiene una lista simplificada de todos los clientes (ID y Razón Social) para los selectores.
+    """
+    return db.query(Cliente).order_by(Cliente.razon_social).all()

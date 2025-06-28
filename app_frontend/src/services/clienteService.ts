@@ -55,14 +55,9 @@ const uploadClientesCSV = async (file: File): Promise<Cliente[]> => {
   return response.data;
 };
 
-// *** CORREGIDO Y FINAL ***
-// La función ahora ACEPTA el token y lo envía explícitamente en los headers.
-const getAllClientesSimple = async (token: string): Promise<ClienteSimple[]> => {
-  const response = await apiClient.get<ClienteSimple[]>('/clientes/simple', {
-      headers: {
-          'Authorization': `Bearer ${token}`
-      }
-  });
+// --- FUNCIÓN CORREGIDA ---
+const getAllClientesSimple = async (): Promise<ClienteSimple[]> => {
+  const response = await apiClient.get<ClienteSimple[]>('/clientes/simple');
   return response.data;
 };
 

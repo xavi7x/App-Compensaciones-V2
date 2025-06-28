@@ -1,10 +1,28 @@
 // src/pages/FacturacionPage.tsx
 import React, { useState, useEffect, useCallback } from 'react';
+import Select from 'react-select';
+import { VendedorSimple } from '../types/vendedor';
+import { ClienteSimple } from '../types/cliente';
 import facturaService from '../services/facturaService';
+import vendedorService from '../services/vendedorService';
+import clienteService from '../services/clienteService';
 import { Factura } from '../types/factura';
 import { toast } from 'react-toastify';
 import FacturaFormModal from '../components/facturas/FacturaFormModal';
 import FacturaUploadCSVModal from '../components/facturas/FacturaUploadCSVModal';
+import FacturasTable from '../components/facturas/FacturasTable';
+
+interface SelectOption {
+    value: number;
+    label: string;
+}
+
+const initialFilters = {
+    start_date: '',
+    end_date: '',
+    vendedor_id: '' as number | '',
+    cliente_id: '' as number | '',
+};
 
 const FacturacionPage: React.FC = () => {
     const [facturas, setFacturas] = useState<Factura[]>([]);
@@ -12,16 +30,24 @@ const FacturacionPage: React.FC = () => {
     const [totalFacturas, setTotalFacturas] = useState(0);
     const [currentPage, setCurrentPage] = useState(1);
     const itemsPerPage = 10;
-    const totalPages = Math.ceil(totalFacturas / itemsPerPage);
-
+    
     const [isFormOpen, setIsFormOpen] = useState(false);
     const [isCsvOpen, setIsCsvOpen] = useState(false);
+    const [facturaToEdit, setFacturaToEdit] = useState<Factura | null>(null);
+    
+    // Estados para los filtros
+    const [filters, setFilters] = useState(initialFilters);
+    const [activeFilters, setActiveFilters] = useState(initialFilters);
+    const [vendedores, setVendedores] = useState<VendedorSimple[]>([]);
+    const [clientes, setClientes] = useState<ClienteSimple[]>([]);
 
-    const fetchFacturas = useCallback(async () => {
+    const totalPages = Math.ceil(totalFacturas / itemsPerPage);
+
+    const fetchFacturasData = useCallback(async () => {
         setIsLoading(true);
         try {
             const skip = (currentPage - 1) * itemsPerPage;
-            const response = await facturaService.getAllFacturas(skip, itemsPerPage);
+            const response = await facturaService.getAllFacturas(skip, itemsPerPage, activeFilters);
             setFacturas(response.items);
             setTotalFacturas(response.total_count);
         } catch (error) {
@@ -29,24 +55,66 @@ const FacturacionPage: React.FC = () => {
         } finally {
             setIsLoading(false);
         }
-    }, [currentPage, itemsPerPage]);
+    }, [currentPage, activeFilters]);
+
+    // Cargar datos para los filtros una sola vez
+    useEffect(() => {
+        vendedorService.getAllVendedoresSimple().then(setVendedores);
+        clienteService.getAllClientesSimple().then(setClientes); // Esta llamada ahora funcionará
+    }, []);
 
     useEffect(() => {
-        fetchFacturas();
-    }, [fetchFacturas]);
+        fetchFacturasData();
+    }, [fetchFacturasData]);
 
+    const handleFilterChange = (name: string, value: any) => {
+        setFilters(prev => ({ ...prev, [name]: value }));
+    };
+
+    const handleSearch = () => {
+        setCurrentPage(1);
+        setActiveFilters(filters);
+    };
+
+    const handleOpenCreateModal = () => {
+        setFacturaToEdit(null);
+        setIsFormOpen(true);
+    };
+
+    const handleOpenEditModal = (factura: Factura) => {
+        setFacturaToEdit(factura);
+        setIsFormOpen(true);
+    };
+
+    const handleDelete = async (facturaId: number) => {
+        if (window.confirm("¿Estás seguro de que deseas eliminar esta factura? Esta acción no se puede deshacer.")) {
+            try {
+                await facturaService.deleteFactura(facturaId);
+                toast.success("Factura eliminada exitosamente");
+                fetchFacturasData();
+            } catch (error: any) {
+                const errorMsg = error.response?.data?.detail || "Error al eliminar la factura.";
+                toast.error(errorMsg);
+            }
+        }
+    };
+    
     const handleSaveSuccess = () => {
         setIsFormOpen(false);
-        fetchFacturas();
+        setFacturaToEdit(null);
+        fetchFacturasData();
     };
 
     const handleUploadSuccess = () => {
         setIsCsvOpen(false);
-        fetchFacturas();
+        fetchFacturasData();
     };
     
     const handleNextPage = () => { if (currentPage < totalPages) setCurrentPage(p => p + 1); };
     const handlePreviousPage = () => { if (currentPage > 1) setCurrentPage(p => p - 1); };
+
+    const vendedorOptions = vendedores.map(v => ({ value: v.id, label: v.nombre_completo }));
+    const clienteOptions = clientes.map(c => ({ value: c.id, label: c.razon_social }));
 
     return (
         <div className="p-4 md:p-6 max-w-7xl mx-auto">
@@ -54,43 +122,40 @@ const FacturacionPage: React.FC = () => {
                 <h1 className="text-3xl font-bold">Gestión de Facturación</h1>
                 <div className="flex gap-2">
                     <button onClick={() => setIsCsvOpen(true)} className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600">Cargar CSV</button>
-                    <button onClick={() => setIsFormOpen(true)} className="px-4 py-2 bg-marrs-green text-white rounded-md hover:bg-opacity-80">+ Carga Manual</button>
+                    <button onClick={handleOpenCreateModal} className="px-4 py-2 bg-marrs-green text-white rounded-md hover:bg-opacity-80">+ Carga Manual</button>
                 </div>
             </div>
 
-            <FacturaFormModal isOpen={isFormOpen} onClose={() => setIsFormOpen(false)} onSave={handleSaveSuccess} />
+            {/* Sección de Filtros */}
+            <div className="p-4 bg-gray-50 rounded-lg mb-6 shadow">
+                <div className="grid grid-cols-1 md:grid-cols-5 items-center gap-4">
+                    <input type="date" value={filters.start_date} onChange={e => handleFilterChange('start_date', e.target.value)} className="w-full px-3 py-2 border border-gray-300 rounded-md"/>
+                    <input type="date" value={filters.end_date} onChange={e => handleFilterChange('end_date', e.target.value)} className="w-full px-3 py-2 border border-gray-300 rounded-md"/>
+                    <Select options={vendedorOptions} onChange={opt => handleFilterChange('vendedor_id', opt?.value || '')} isClearable placeholder="Filtrar por vendedor..."/>
+                    <Select options={clienteOptions} onChange={opt => handleFilterChange('cliente_id', opt?.value || '')} isClearable placeholder="Filtrar por cliente..."/>
+                    <button 
+                        onClick={handleSearch} 
+                        className="inline-flex justify-center py-2 px-6 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-marrs-green hover:bg-opacity-80 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-marrs-green disabled:opacity-50"
+                    >
+                        Buscar
+                    </button>
+                </div>
+            </div>
+
+            <FacturaFormModal 
+                isOpen={isFormOpen} 
+                onClose={() => setIsFormOpen(false)} 
+                onSave={handleSaveSuccess}
+                facturaToEdit={facturaToEdit}
+            />
             <FacturaUploadCSVModal isOpen={isCsvOpen} onClose={() => setIsCsvOpen(false)} onUploadSuccess={handleUploadSuccess} />
             
-            <div className="bg-white shadow-md rounded-lg overflow-x-auto">
-                <table className="min-w-full table-auto">
-                    <thead className="bg-gray-100">
-                        <tr>
-                            <th className="px-6 py-3 text-left">N° Orden</th>
-                            <th className="px-6 py-3 text-left">Vendedor</th>
-                            <th className="px-6 py-3 text-left">Cliente</th>
-                            <th className="px-6 py-3 text-left">Fecha Venta</th>
-                            <th className="px-6 py-3 text-right">Honorarios</th>
-                            <th className="px-6 py-3 text-right">Gastos</th>
-                        </tr>
-                    </thead>
-                    <tbody className="divide-y">
-                        {isLoading ? (
-                            <tr><td colSpan={6} className="p-4 text-center text-gray-500">Cargando facturas...</td></tr>
-                        ) : facturas.length > 0 ? facturas.map(factura => (
-                            <tr key={factura.id}>
-                                <td className="px-6 py-4">{factura.numero_orden}</td>
-                                <td className="px-6 py-4">{factura.vendedor?.nombre_completo || 'N/A'}</td>
-                                <td className="px-6 py-4">{factura.cliente?.razon_social || 'N/A'}</td>
-                                <td className="px-6 py-4">{new Date(factura.fecha_venta).toLocaleDateString()}</td>
-                                <td className="px-6 py-4 text-right">${factura.honorarios_generados.toLocaleString('es-CL')}</td>
-                                <td className="px-6 py-4 text-right">${factura.gastos_generados.toLocaleString('es-CL')}</td>
-                            </tr>
-                        )) : (
-                           <tr><td colSpan={6} className="p-4 text-center text-gray-500">No hay facturas registradas.</td></tr>
-                        )}
-                    </tbody>
-                </table>
-            </div>
+            <FacturasTable 
+                facturas={facturas}
+                isLoading={isLoading}
+                onEdit={handleOpenEditModal}
+                onDelete={handleDelete}
+            />
             
             {!isLoading && totalFacturas > itemsPerPage && (
               <div className="mt-6 flex justify-center items-center space-x-2">

@@ -179,3 +179,15 @@ async def upload_clientes_csv(
 
 
     return created_clientes # Retorna solo los clientes creados exitosamente
+
+# --- AÑADIR ESTE NUEVO ENDPOINT AL FINAL DEL ARCHIVO ---
+@router.get("/simple", response_model=List[schemas.cliente.ClienteSimple])
+def read_clientes_simple_endpoint(
+    db: Session = Depends(deps.get_db),
+    current_user: UserModel = Depends(deps.get_current_user)
+) -> Any:
+    """
+    Obtener una lista simplificada de todos los clientes para los selectores.
+    """
+    clientes = crud.crud_cliente.get_clientes_simple(db)
+    return clientes
